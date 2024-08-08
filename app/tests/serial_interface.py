@@ -17,7 +17,7 @@ def read_serial_lines(ser, num_lines=3):
     """Reads a specified number of lines from the serial port."""
     lines = []
     for _ in range(num_lines):
-        line = ser.readline().decode('utf-8').strip()
+        line = ser.readline().decode('utf-8',  errors='ignore').strip()
         if line:
             lines.append(line)
         else:
@@ -44,15 +44,24 @@ class MyCLI(cmd.Cmd):
     def do_start_stream(self, line):
         """Start Streaming"""
         print("starting stream")
+        ser.flushInput()
         message = f"START_STREAM 1\n"
         send_message(ser, message)
-        #response = read_serial_lines(ser)
-        #print(f"Response: {response}")
+        response = read_serial_lines(ser)
+        print(f"Response: {response}")
         
+    def do_get_sensor_name(self, line):
+        """Get Sensor Name"""
+        print("getting sensor name")
+        message = f"GET_SENSOR_NAME 1\n"
+        send_message(ser, message)
+        response = read_serial_lines(ser)
+        print(f"Response: {response}")
 
     def do_stop_stream(self, line):
         """Stop Streaming"""
         print("stopping stream")
+        ser.flushInput()
         message = f"STOP_STREAM 0\n"
         send_message(ser,message)
         #response =  read_serial_lines(ser)

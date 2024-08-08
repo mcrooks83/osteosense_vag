@@ -91,7 +91,11 @@ byte oldState = 0;
 
 String filename;
 
-String sensorName = "SM01";
+
+// should be able to rename the sensor potentially which means storing it on disk
+String sensorName = "OST-001";
+
+
 
 //************************************************************************************************************
 //**
@@ -441,19 +445,20 @@ void setup()
 
   //generate the file name
   //name mmddhhmmss.csv
-  if(rtc.getMonth()<10){sensorName += "0";}
-  sensorName += String(rtc.getMonth());
-  if(rtc.getDate()<10){sensorName += "0";}
-  sensorName += String(rtc.getDate());
-  if(rtc.getHours()<10){sensorName += "0";}
-  sensorName += String(rtc.getHours());
-  if(rtc.getMinutes()<10){sensorName += "0";}
-  sensorName += String(rtc.getMinutes());
-  if(rtc.getSeconds()<10){sensorName += "0";}
-  sensorName += String(rtc.getSeconds());
+  String s_name = sensorName;
+  if(rtc.getMonth()<10){s_name += "0";}
+  s_name += String(rtc.getMonth() + "_");
+  if(rtc.getDate()<10){s_name += "0";}
+  s_name += String(rtc.getDate());
+  if(rtc.getHours()<10){s_name += "0";}
+  s_name += String(rtc.getHours());
+  if(rtc.getMinutes()<10){s_name += "0";}
+  s_name += String(rtc.getMinutes());
+  if(rtc.getSeconds()<10){s_name += "0";}
+  s_name += String(rtc.getSeconds());
 
   //change file extension here to OST for Osteosense
-  filename = sensorName + ".OST";
+  filename = s_name + ".OST";
   
   // Set the analog reference 
   analogReference(AR_INTERNAL1V0);
@@ -519,9 +524,9 @@ void dateTimeSD(uint16_t* date, uint16_t* time) {
 // Serial interface 
 
 //comands
-enum cmd {SET_ACCEL_RANGE, SET_SAMPLE_FREQUENCY,  IDENTIFY, START_STREAM, STOP_STREAM};
+enum cmd {SET_ACCEL_RANGE, SET_SAMPLE_FREQUENCY,  IDENTIFY, START_STREAM, STOP_STREAM, GET_SENSOR_NAME};
 
-bool is_streaming = 0; // flag to control streaming in the loop
+bool is_streaming = 1; // flag to control streaming in the loop
 
 int parseCommand(String message) {
   if (message.startsWith("SET_ACCEL_RANGE")) {
@@ -539,10 +544,14 @@ int parseCommand(String message) {
   if(message.startsWith("IDENTIFY")){
     return IDENTIFY;
   }
+  if(message.startsWith("GET_SENSOR_NAME")){
+    return GET_SENSOR_NAME;
+  }
   // Add more commands here
   return -1;
 }
 
+// re write this so that commands can have values or not
 void executeCommand(int command, int value) {
   switch (command) {
     case SET_ACCEL_RANGE:
@@ -568,12 +577,18 @@ void executeCommand(int command, int value) {
     case IDENTIFY:
       indentify(value);
       break;
+    case GET_SENSOR_NAME:
+      if(value == 1){
+        getSensorName();
+      }
+      break;
     default:
       Serial.println("Error: Command execution not defined.");
   }
 }
 
 void handleCommand(String message) {
+  
   int command = parseCommand(message);
   //if the message is known command get the value
   if (command != -1) {
@@ -582,10 +597,10 @@ void handleCommand(String message) {
 
     if (valueString.length() > 0 && isNumeric(valueString)) {
       int value = valueString.toInt();
-      Serial.print("Command: ");
-      Serial.print(command);
-      Serial.print(", Value: ");
-      Serial.println(value);
+      //Serial.print("Command: ");
+      //Serial.print(command);
+      //Serial.print(", Value: ");
+      //Serial.println(value);
       executeCommand(command, value);
     } else {
       Serial.println("Error: Invalid value for command.");
@@ -606,11 +621,66 @@ bool isNumeric(String str) {
 }
 
 // *****************************************************
+
+void getSensorName (){
+  Serial.println(sensorName);
+}
 // functions to set command values
 void setAccelRange(int value) {
-  Serial.print("Range has been set to: ");
-  Serial.println(value);
-  // set range logic
+  //Serial.print("Range has been set to: ");
+  //Serial.println(value);
+  uint8_t register_value;
+  uint8_t range_replacement;
+  // keep the first 4 bits
+  uint8_t mask = 0xF0;
+
+  //read the register
+  digitalWrite(cSelect2, LOW);
+    mySPI.transfer(0x10 | 0x80); //CTRL1_XL with read bit set
+    register_value = mySPI.transfer(0x00);
+    //Serial.print("range currently set is: ");
+    //Serial.println(register_value, HEX);  // curently set to A4
+  digitalWrite(cSelect2, HIGH); 
+  
+  register_value &= mask;
+  Serial.println(register_value, HEX);  
+
+  // 00 4g, 01 32g 10 8g 11 16g
+  if(value == 32){
+   range_replacement =  0b0100; // filter remains disabled
+   register_value |= range_replacement; // Combine
+  }
+  else if (value == 16){
+    range_replacement = 0b1100;
+    register_value |= range_replacement;
+  }
+  else if(value == 8){
+    range_replacement = 0b1000;
+    register_value |= range_replacement;
+  }
+  else if(value == 4){
+    range_replacement = 0b0000;
+    register_value |= range_replacement;
+  }
+  else{
+    // set to 32g as default
+    range_replacement =  0b0100; // filter remains disabled
+    register_value |= (range_replacement << 4);
+  }
+  
+  // write the new range to the register
+  digitalWrite(cSelect2, LOW);
+    mySPI.transfer(0x10); //CTRL1_XL
+    mySPI.transfer(register_value);
+  digitalWrite(cSelect2, HIGH);  
+
+  // read the register to check what has been written
+  digitalWrite(cSelect2, LOW);
+    mySPI.transfer(0x10 | 0x80); //CTRL1_XL with read bit set
+    register_value = mySPI.transfer(0x00);
+    //Serial.print("range now set is: ");
+    //Serial.println(register_value, HEX);  // curently set to A4
+  digitalWrite(cSelect2, HIGH); 
 }
 
 void setSampleFrequency(int value){
@@ -619,17 +689,18 @@ void setSampleFrequency(int value){
 }
 
 void startStream(){
-  Serial.println("starting stream");
+  //Serial.println("starting stream");
   is_streaming = 1;
 }
 
 void stopStream(){
-  Serial.println("stopping stream");
   is_streaming = 0;
+  //Serial.println("stopping stream");
+  
 }
 
 void indentify(int value){
-  Serial.print("Indentifying sensor");
+  //Serial.print("Indentifying sensor");
   unsigned long startTime = millis(); // Record the start time
   while (millis() - startTime < 5000) { // Loop for 5 seconds (5000 milliseconds)
     strip.setPixelColor(0, 0xFF00FF);   //green 0x00FF00 purple 0xFF00FF
@@ -640,8 +711,18 @@ void indentify(int value){
     delay(100);
 
   }
-  Serial.print("Indentifying complete");
+  //Serial.print("Indentifying complete");
   
+}
+
+// function to clear all the data from the serial port when the serial command to stop stream is sent
+void clearBuffer() {
+    while (Serial.available() > 0) {
+        //Serial.println("clearing");
+        Serial.read();  // Discard all remaining data
+        delay(1000);
+    }
+    //Serial.println("Buffer cleared");
 }
 //************************************************************************************
 void loop()
@@ -738,12 +819,13 @@ void loop()
   }else{      
 
       // messages are structured as a command and a value e.g SET_ACCEL_RANGE 16
+      
       if (Serial.available() > 0) {
         String incomingMessage = Serial.readStringUntil('\n');
         incomingMessage.trim();
         
-        Serial.print("Received message: ");
-        Serial.println(incomingMessage);
+        //Serial.print("Received message: ");
+        //Serial.println(incomingMessage);
 
         handleCommand(incomingMessage);
       }
@@ -775,24 +857,14 @@ void loop()
           }
 
       }
-      
-      //*******************************************************
     
   }
-
-
-  //digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
 
       //Shuting down
     if(shutDown == 1){
      strip.setPixelColor(0, 0x000000);
      strip.show();
      if( dataFile.isOpen()){dataFile.close();}
-      //if( dataFileA.isOpen()){dataFileA.close();}
-      //if( dataFileB.isOpen()){dataFileB.close();}
-//      dataFile = sd.open(bootLogName,FILE_WRITE);
-//        dataFile.print(offM);
-//      dataFile.close();
       delay(500);
       Wire.beginTransmission(RV3028_ADDR);
       Wire.write(RV3028_STATUS);
@@ -800,45 +872,4 @@ void loop()
       Wire.endTransmission();
       delay(500);
     }
-
-    //Watchdog.reset();
-
-  
-//  while( dBufferIn != dBufferOut and USB_Status == 0){
-//
-//    String output = "";
-//
-//    output += String(timeBuffer[dBufferOut]);
-//    output += ",";
-//    output += String(adc0[dBufferOut]);
-//    output += ",";
-//    output += String(adc1[dBufferOut]);
-//    output += ",";
-//    output += String(adc2[dBufferOut]);
-//    output += ",";
-//    output += String(adc3[dBufferOut]);
-//    output += ",";
-//    output += String(adc4[dBufferOut]);
-//    output += ",";
-//    output += String(adc5[dBufferOut]);
-//    output += ",";
-//    output += String(adc6[dBufferOut]);
-//    output += "\n";
-//
-//    digitalWrite(LED_BLUE, HIGH);
-//    if(!dataFile.isOpen()){  dataFile = sd.open(sensorName,FILE_WRITE);}
-//    dataFile.print(output); 
-//    digitalWrite(LED_BLUE, LOW);
-//
-//    dBufferOut++;
-//    if (dBufferOut == bufferSize){dBufferOut = 0;}
-//
-//  }
-//  
-//  if( dataFile.isOpen()){
-//    digitalWrite(LED_BLUE, HIGH);
-//    dataFile.close();
-//    digitalWrite(LED_BLUE, LOW);
-//  }
-
 }

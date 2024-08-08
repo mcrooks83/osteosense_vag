@@ -1,5 +1,5 @@
 
-from tkinter import LabelFrame, Frame, IntVar, Radiobutton
+from tkinter import LabelFrame, Frame, IntVar, Radiobutton, Button
 from components.stream.stream import StreamFrame
 from components.analyse.analyse import AnalyseFrame
 

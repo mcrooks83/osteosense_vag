@@ -13,6 +13,8 @@ def simple_convert(row):
     acc_y = (unpack('<h', bytes(row[4:6]))[0]  ) / 1024
     acc_z = (unpack('<h', bytes(row[6:8]))[0]  ) / 1024
 
+    print(acc_x, acc_y,acc_z)
+
     return acc_x,  acc_y, acc_z
 
 def unpacking_v2_format_hig(row):

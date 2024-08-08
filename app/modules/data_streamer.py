@@ -6,18 +6,20 @@ from datetime import datetime
 import csv
 
 class DataStreamer(threading.Thread):
-    def __init__(self, port_name, baud_rate, frame_length, cb, log):
+    def __init__(self, frame_length, cb, ser):
         super().__init__()
-        self.port_name = port_name
-        self.baud_rate = baud_rate
+        #self.port_name = port_name
+        #self.baud_rate = baud_rate
         self.frame_length = frame_length
-        self.ser = None
+        self.ser = ser
         self.running = True
         self.cb = cb
         self.row_count = 0
-        self.log = log
+        self.log = 0
         self.log_filename = ""
 
+    
+    def create_log_file(self):
         current_directory = os.getcwd()
         parent = os.path.abspath(os.path.join(current_directory, os.pardir))
         self.target_directory = os.path.join(parent, "app/exports/logs/")
@@ -51,30 +53,14 @@ class DataStreamer(threading.Thread):
         self.log_filename = filename
 
     def run(self):
-        self.ser = self.open_serial_port()
+        #self.ser = self.open_serial_port()
         if self.ser:
             while self.running:
                 self.poll_usb_port()
-            self.close_serial_port()
+            #self.close_serial_port()
 
-    def open_serial_port(self):
-        try:
-            ser = serial.Serial(port=self.port_name, baudrate=self.baud_rate, timeout=1)
-            print(f"Serial port {ser.portstr} opened successfully.")
-            return ser
-        except serial.SerialException as e:
-            print(f"Error opening serial port: {e}")
-            return None
-
-    def close_serial_port(self):
-        if self.ser and self.ser.is_open:
-            self.ser.close()
-            print(f"Serial port {self.ser.portstr} closed successfully.")
-        else:
-            print("Serial port is already closed or was never opened.")
 
     def poll_usb_port(self):
-        if self.ser:
             try:
                 if self.ser.in_waiting > 0:
                     row = self.ser.read(self.frame_length)

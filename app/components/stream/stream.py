@@ -6,6 +6,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,NavigationToolb
 from matplotlib import style
 import collections
 from modules import data_streamer as ds
+from modules import serial_interface as si
 import serial.tools.list_ports
 
 
@@ -44,6 +45,14 @@ class StreamFrame(Frame):
         self.stop_button.grid(row=0, column=3, padx=5,pady=5, sticky="w")
         self.stop_button.configure(bg="orange", fg="white")
 
+        self.identify_button = Button(self.operations_frame, text="Identify", command= lambda: self.identify())
+        self.identify_button.grid(row=0, column=4, padx=5,pady=5, sticky="w")
+        self.identify_button.configure(bg="purple", fg="white")
+
+        self.sensor_name_label = Label(self.operations_frame, text="")
+        self.sensor_name_label.grid(row=0, column=5, padx=5, pady=5, sticky="w")
+
+
         # set up the data buffers
         self.x_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.y_data = collections.deque(maxlen=self.s.get_buffer_size())
@@ -68,8 +77,13 @@ class StreamFrame(Frame):
         self.ani_is_running = False
         self.ani = None
         self.data_streamer = None
-
+        self.serial_int = None
+        self.sensor_name = ""
         self.start_animation()
+
+    def identify(self):
+        message = f"IDENTIFY 1\n"
+        self.serial_int.send_message(message)
 
     def set_log(self):
         if(self.log_var.get() == 0):
@@ -89,6 +103,12 @@ class StreamFrame(Frame):
     def on_usb_port_combo_select(self, event):
         selected_usb_port = self.usb_port_combo.get()
         self.s.set_usb_port(selected_usb_port)
+        self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
+        self.serial_int.open_serial_port()
+        message = f"GET_SENSOR_NAME 1\n"
+        self.sensor_name = self.serial_int.send_message(message, rsp=1)
+        print(self.sensor_name)
+        self.sensor_name_label.configure(text=self.sensor_name)
         print(selected_usb_port)
         self.start_button.config(state=NORMAL)
 
@@ -130,15 +150,17 @@ class StreamFrame(Frame):
     ## TODO:
     ## when the stream is stopped run the analysis pipeline and switch to the analyse component
     def start_stream(self):
+        message = f"START_STREAM 1\n"
+        self.serial_int.send_message(message)
         print("Starting a new thread...")
         if(self.s.get_usb_port()):
-            self.data_streamer = ds.DataStreamer(self.s.get_usb_port(), self.s.get_baud_rate(), 
-                                                 self.s.get_stream_frame_length(), self.stream_data_callback,
-                                                 self.s.get_log())
+            self.data_streamer = ds.DataStreamer( self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial())
             self.data_streamer.start()
             res = self.start_animation()
 
     def stop_stream(self):
+        message = f"STOP_STREAM 0\n"
+        self.serial_int.send_message(message)
         self.data_streamer.stop()
         self.data_streamer.join() 
         self.stop_animation()
@@ -152,9 +174,9 @@ class StreamFrame(Frame):
 
     def animate(self, i, tx, accel_x, accel_y, accel_z):
         self.ax.clear()
-        self.ax.plot(tx, accel_x, label="x accel")
-        self.ax.plot(tx, accel_y, label="y accel")
-        self.ax.plot(tx, accel_z, label="z accel")
+        self.ax.plot(tx, accel_x, label="x accel", linewidth=1)
+        self.ax.plot(tx, accel_y, label="y accel", linewidth=1)
+        self.ax.plot(tx, accel_z, label="z accel", linewidth=1)
         self.ax.legend()
         self.ax.grid(True)
-        self.ax.set_ylim(-5, 5)
+        self.ax.set_ylim(-10, 10)
