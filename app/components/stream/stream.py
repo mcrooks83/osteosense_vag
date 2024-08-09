@@ -126,11 +126,9 @@ class StreamFrame(Frame):
         self.s.set_usb_port(selected_usb_port)
         self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
         self.serial_int.open_serial_port()
-        #message = f"GET_SENSOR_NAME 1\n"
-        #self.sensor_name = self.serial_int.send_message(message, rsp=1)
-        #print(self.sensor_name)
-        #self.sensor_name_label.configure(text=self.sensor_name)
-        #print(selected_usb_port)
+        message = f"GET_SENSOR_NAME 1\n"
+        self.sensor_name = self.serial_int.send_message(message, rsp=1)
+        self.sensor_name_label.configure(text=self.sensor_name)
         self.start_button.config(state=NORMAL)
 
     def reset_buffers(self):
