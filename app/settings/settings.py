@@ -11,7 +11,8 @@ class Settings:
         self.mount_path = "/media/mike/641A-F4BD"
         self.baud_rate = 256000
         self.frame_length = 11 # bytes
-        self.stream_frame_length = 8
+        self.stream_frame_length = 8 # 14 for gyro
+        self.gyr = 0 # gyr select
 
         self.export_dir = "exports/"
 
@@ -34,6 +35,8 @@ class Settings:
 
         self.make_dirs()
 
+    def get_gyr_select(self):
+        return self.gyr
 
     def make_dirs(self):
         if not os.path.exists(self.export_dir):

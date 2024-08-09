@@ -17,7 +17,7 @@ class StreamFrame(Frame):
         
         self.grid(row=1, column=0,rowspan=1,columnspan=1, sticky='news',padx=5,pady=5)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure((3,4), weight=1)
 
         # operations frame
         self.operations_frame = Frame(self)
@@ -59,10 +59,15 @@ class StreamFrame(Frame):
         self.z_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
 
-        # figure
+        self.gyr_x_data = collections.deque(maxlen=self.s.get_buffer_size())
+        self.gyr_y_data = collections.deque(maxlen=self.s.get_buffer_size())
+        self.gyr_z_data = collections.deque(maxlen=self.s.get_buffer_size())
+        
+
+        # Acceleration
         self.vag_stream = Figure()
         self.ax = self.vag_stream.subplots()
-        self.ax.set_title(f"Osteosense VAG signals")
+        self.ax.set_title(f"Osteosense VAG Accleration")
         self.ax.set_ylim(-10, 10)
         self.ax.set_xlabel("packet count", fontsize=8)
         self.ax.set_ylabel("acceleration (g)", fontsize=8)
@@ -74,8 +79,24 @@ class StreamFrame(Frame):
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self)
         self.vag_stream_canvas.get_tk_widget().grid(row=3, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
 
+        # Angular Velocity
+        self.vag_gry_stream = Figure()
+        self.ax1 = self.vag_gry_stream.subplots()
+        self.ax1.set_title(f"Osteosense VAG Angular Velocity")
+        self.ax1.set_ylim(-10, 10)
+        self.ax1.set_xlabel("packet count", fontsize=8)
+        self.ax1.set_ylabel("angular velocity (deg/s)", fontsize=8)
+
+        self.ax1.xaxis.set_ticks_position('bottom')
+        self.ax1.yaxis.set_ticks_position('left')
+        self.ax1.autoscale(True)
+        
+        self.vag_gry_stream_canvas = FigureCanvasTkAgg(self.vag_gry_stream, master=self)
+        self.vag_gry_stream_canvas.get_tk_widget().grid(row=4, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
+
         self.ani_is_running = False
         self.ani = None
+        self.ani1 = None
         self.data_streamer = None
         self.serial_int = None
         self.sensor_name = ""
@@ -105,11 +126,11 @@ class StreamFrame(Frame):
         self.s.set_usb_port(selected_usb_port)
         self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
         self.serial_int.open_serial_port()
-        message = f"GET_SENSOR_NAME 1\n"
-        self.sensor_name = self.serial_int.send_message(message, rsp=1)
-        print(self.sensor_name)
-        self.sensor_name_label.configure(text=self.sensor_name)
-        print(selected_usb_port)
+        #message = f"GET_SENSOR_NAME 1\n"
+        #self.sensor_name = self.serial_int.send_message(message, rsp=1)
+        #print(self.sensor_name)
+        #self.sensor_name_label.configure(text=self.sensor_name)
+        #print(selected_usb_port)
         self.start_button.config(state=NORMAL)
 
     def reset_buffers(self):
@@ -117,6 +138,9 @@ class StreamFrame(Frame):
         self.x_data.clear()
         self.y_data.clear()
         self.z_data.clear()
+        self.gyr_x_data.clear()
+        self.gyr_y_data.clear()
+        self.gyr_z_data.clear()
 
     def start_animation(self):
         print(self.ani_is_running)
@@ -133,6 +157,17 @@ class StreamFrame(Frame):
                 fargs=(self.time_index, self.x_data, self.y_data, self.z_data),
                 interval=10
             )
+
+            if(self.s.get_gyr_select()): # if the gyro is selected
+
+                self.ani1 = animation.FuncAnimation(
+                    self.vag_gry_stream,
+                    self.animate1,
+                    fargs=(self.time_index, self.gyr_x_data, self.gyr_y_data, self.gyr_z_data),
+                    interval=10
+                )
+
+            self.vag_gry_stream_canvas.draw()
             self.vag_stream_canvas.draw()
             self.ani_is_running = True
             return "Animation started"
@@ -143,6 +178,10 @@ class StreamFrame(Frame):
         if self.ani and self.ani_is_running:
             self.ani.event_source.stop()  # Stop the event source
             self.ani = None  # Clear the animation instance
+
+            if(self.s.get_gyr_select()):
+                self.ani1.event_source.stop()  # Stop the event source
+                self.ani1 = None  # Clear the animation instance
             self.ani_is_running = False
             return "Animation stopped"
         return "No animation to stop"
@@ -166,10 +205,14 @@ class StreamFrame(Frame):
         self.stop_animation()
         self.reset_buffers()
 
-    def stream_data_callback(self, acc_x, acc_y, acc_z, t_index):
+    def stream_data_callback(self, acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z, t_index):
         self.x_data.append(acc_x)
         self.y_data.append(acc_y)
         self.z_data.append(acc_z)
+        if(self.s.get_gyr_select()):
+            self.gyr_x_data.append(gyr_x)
+            self.gyr_y_data.append(gyr_y)
+            self.gyr_z_data.append(gyr_z)
         self.time_index.append(t_index)
 
     def animate(self, i, tx, accel_x, accel_y, accel_z):
@@ -180,3 +223,12 @@ class StreamFrame(Frame):
         self.ax.legend()
         self.ax.grid(True)
         self.ax.set_ylim(-10, 10)
+    
+    def animate1(self, i, tx, gry_x, gry_y, gry_z):
+        self.ax1.clear()
+        self.ax1.plot(tx, gry_x, label="x gyr", linewidth=1)
+        self.ax1.plot(tx, gry_y, label="y gyr", linewidth=1)
+        self.ax1.plot(tx, gry_z, label="z gyr", linewidth=1)
+        self.ax1.legend()
+        self.ax1.grid(True)
+        self.ax1.set_ylim(-10, 10)

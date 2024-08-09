@@ -68,8 +68,12 @@ uint8_t * ptrTimeBuffer = (uint8_t *) &timeBuffer;
 int16_t   accelerationx[bufferSize];
 int16_t   accelerationy[bufferSize];
 int16_t   accelerationz[bufferSize];
+int16_t   gyrox[bufferSize];
+int16_t   gyroy[bufferSize];
+int16_t   gyroz[bufferSize];
 
-int16_t  spiBuffer[3];  // holds 3 values for accleration (6 for gyroscope?)
+//int16_t  spiBuffer[3];  // holds 3 values for accleration (6 for gyroscope?)
+int16_t   spiBuffer[6];
 uint8_t * ptrspiBuffer = (uint8_t *) &spiBuffer;
 
 uint16_t dBufferIn = 0;
@@ -117,6 +121,12 @@ void TC3_Handler (void) {
       ptrspiBuffer[3] = mySPI.transfer(0x00);
       ptrspiBuffer[4] = mySPI.transfer(0x00);
       ptrspiBuffer[5] = mySPI.transfer(0x00);
+      ptrspiBuffer[6] = mySPI.transfer(0x00);
+      ptrspiBuffer[7] = mySPI.transfer(0x00);
+      ptrspiBuffer[8] = mySPI.transfer(0x00);
+      ptrspiBuffer[9] = mySPI.transfer(0x00);
+      ptrspiBuffer[10] = mySPI.transfer(0x00);
+      ptrspiBuffer[11] = mySPI.transfer(0x00);
 
     digitalWrite(cSelect2, HIGH);   
 
@@ -124,6 +134,10 @@ void TC3_Handler (void) {
       accelerationx[dBufferIn] = spiBuffer[0];
       accelerationy[dBufferIn] = spiBuffer[1];
       accelerationz[dBufferIn] = spiBuffer[2];
+
+      gyrox[dBufferIn] = spiBuffer[4];
+      gyroy[dBufferIn] = spiBuffer[5];
+      gyroz[dBufferIn] = spiBuffer[6];
       //can gryo be added here?
 
       timeForBuffer++;
@@ -474,6 +488,8 @@ void setup()
   delay(100);
 
 
+//default accelerometer config
+
 //    //Accelerometer ODR selection
 //    //Accelerometer full-scale selection
 //    //No second low-pass filter
@@ -481,6 +497,12 @@ void setup()
     mySPI.transfer(0x10); //CTRL1_XL
     mySPI.transfer(0xA4); //6.66 kHz ±32 g no filter    to enable 6.66 kHz at +-16g => 0xAC => 0xA4 for +-32g and disabled filter
   digitalWrite(cSelect2, HIGH);  
+
+// default gyroscope config
+  digitalWrite(cSelect2, LOW);
+    mySPI.transfer(0x11); //CTRL2_G
+    mySPI.transfer(0xAC); 
+  digitalWrite(cSelect2, HIGH);
 
 
   // deals with setting the 2nd filter (low pass or high pass)
@@ -526,7 +548,7 @@ void dateTimeSD(uint16_t* date, uint16_t* time) {
 //comands
 enum cmd {SET_ACCEL_RANGE, SET_SAMPLE_FREQUENCY,  IDENTIFY, START_STREAM, STOP_STREAM, GET_SENSOR_NAME};
 
-bool is_streaming = 1; // flag to control streaming in the loop
+bool is_streaming = 0; // flag to control streaming in the loop
 
 int parseCommand(String message) {
   if (message.startsWith("SET_ACCEL_RANGE")) {
@@ -675,14 +697,15 @@ void setAccelRange(int value) {
   digitalWrite(cSelect2, HIGH);  
 
   // read the register to check what has been written
-  digitalWrite(cSelect2, LOW);
+  /*digitalWrite(cSelect2, LOW);
     mySPI.transfer(0x10 | 0x80); //CTRL1_XL with read bit set
     register_value = mySPI.transfer(0x00);
     //Serial.print("range now set is: ");
     //Serial.println(register_value, HEX);  // curently set to A4
-  digitalWrite(cSelect2, HIGH); 
+  digitalWrite(cSelect2, HIGH); */
 }
 
+//FIX
 void setSampleFrequency(int value){
   Serial.print("Sample Frequency set to: ");
   Serial.println(value);
@@ -784,6 +807,7 @@ void loop()
         }
   }
 
+  //logging mode
   if (hasUSB == 0){
     if (hasSD){
       while( dBufferIn != dBufferOut){
@@ -836,7 +860,7 @@ void loop()
       if(is_streaming){
           uint16_t Xout = dBufferIn / 20;
           if( Xout * 20 != dBufferOut){
-            int16_t  outBuffer[80];
+            int16_t  outBuffer[100];
             uint8_t * ptrOutBuffer = (uint8_t *) &outBuffer;
         
             for(uint8_t i = 0; i < 20; i++){
@@ -847,7 +871,9 @@ void loop()
               outBuffer[1 + outPos] = accelerationx[dBufferOut + i];
               outBuffer[2 + outPos] = accelerationy[dBufferOut + i];
               outBuffer[3 + outPos] = accelerationz[dBufferOut + i];
-        
+              outBuffer[4 + outPos] = gyrox[dBufferOut + i];
+              outBuffer[5 + outPos] = gyroy[dBufferOut + i];
+              outBuffer[6 + outPos] = gyroz[dBufferOut + i];
             }
         
             Serial.write(ptrOutBuffer,160); 
