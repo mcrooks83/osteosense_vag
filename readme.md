@@ -22,6 +22,7 @@ The sensor can operate in stream mode when connected to a usb port or via loggin
 ## Software
 The inital software is a python tkinter desktop application
 It allows two core views - stream and analyse. 
+It is curently developed and test on Ubuntu and other platforms will be tested at a later date
 
 ### Stream
 The stream view allows data to be streamed from the sensor over USB and is used to test functionality of the sensor and also to provide the ability to observe motion in real time.
