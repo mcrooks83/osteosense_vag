@@ -113,7 +113,7 @@ void TC3_Handler (void) {
     //LSM6DSO32 read
     digitalWrite(cSelect2, LOW);
     
-      mySPI.transfer(0xA8);
+      mySPI.transfer(0xA2);  // for gyro (A8 for acceleration)
       //pointer to the spi buffer
       ptrspiBuffer[0] = mySPI.transfer(0x00);
       ptrspiBuffer[1] = mySPI.transfer(0x00);
@@ -131,13 +131,15 @@ void TC3_Handler (void) {
     digitalWrite(cSelect2, HIGH);   
 
       timeBuffer[dBufferIn] = timeForBuffer;
-      accelerationx[dBufferIn] = spiBuffer[0];
-      accelerationy[dBufferIn] = spiBuffer[1];
-      accelerationz[dBufferIn] = spiBuffer[2];
 
-      gyrox[dBufferIn] = spiBuffer[4];
-      gyroy[dBufferIn] = spiBuffer[5];
-      gyroz[dBufferIn] = spiBuffer[6];
+      gyrox[dBufferIn] = spiBuffer[0];
+      gyroy[dBufferIn] = spiBuffer[1];
+      gyroz[dBufferIn] = spiBuffer[2];
+      accelerationx[dBufferIn] = spiBuffer[3];
+      accelerationy[dBufferIn] = spiBuffer[4];
+      accelerationz[dBufferIn] = spiBuffer[5];
+
+      
       //can gryo be added here?
 
       timeForBuffer++;
@@ -759,7 +761,7 @@ void loop()
 
     //Watchdog.reset();
     blinkTime = millis() + OffTime;
-    enableInt = 1;
+    enableInt = 1;  // stops interrupt accessing SPI if set to 0
   }
 
 
@@ -860,12 +862,12 @@ void loop()
       if(is_streaming){
           uint16_t Xout = dBufferIn / 20;
           if( Xout * 20 != dBufferOut){
-            int16_t  outBuffer[100];
+            int16_t  outBuffer[140];
             uint8_t * ptrOutBuffer = (uint8_t *) &outBuffer;
         
             for(uint8_t i = 0; i < 20; i++){
         
-              uint8_t outPos = i * 4;
+              uint8_t outPos = i * 7;//4;
         
               outBuffer[0 + outPos] = (0x0B0B);
               outBuffer[1 + outPos] = accelerationx[dBufferOut + i];
@@ -876,7 +878,7 @@ void loop()
               outBuffer[6 + outPos] = gyroz[dBufferOut + i];
             }
         
-            Serial.write(ptrOutBuffer,160); 
+            Serial.write(ptrOutBuffer,280); //160
             
             dBufferOut = dBufferOut + 20;
             if (dBufferOut == bufferSize){dBufferOut = 0;}

@@ -15,8 +15,8 @@ def simple_convert(row, gyr=0):
     
     if(gyr):
         gyr_x = (unpack('<h', bytes(row[8:10]))[0]  ) / 1024
-        gyr_y = (unpack('<h', bytes(row[10:12]))[0]  ) / 1024
-        gyr_z = (unpack('<h', bytes(row[12:14]))[0]  ) / 1024
+        gyr_y = (unpack('<h', bytes(row[10:12]))[0]  )/ 1024
+        gyr_z = (unpack('<h', bytes(row[12:14]))[0]  )/ 1024
 
         return acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z
     else:

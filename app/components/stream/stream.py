@@ -29,28 +29,36 @@ class StreamFrame(Frame):
         self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
 
+        self.sensor_name_label = Label(self.operations_frame, text="")
+        self.sensor_name_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
         self.log_var = IntVar()
+        self.gyr_var = IntVar(value=1)
         
         # Create radio buttons to switch frames
         self.log_rb = Checkbutton(self.operations_frame, text="log", onvalue=1, offvalue=0, variable = self.log_var, command=self.set_log)
-        self.log_rb.grid(row=0,column=1,pady=5, sticky="w")
+        self.log_rb.grid(row=0,column=2,pady=5, sticky="w")
+
+        
+
+        self.gry_rb = Checkbutton(self.operations_frame, text="gyro", onvalue=1, offvalue=0, variable = self.gyr_var, command=self.set_gyro)
+        self.gry_rb.grid(row=0,column=3,pady=5, sticky="w")
 
         # start stream button
         self.start_button = Button(self.operations_frame, text="Start Streaming", state=DISABLED, command= lambda: self.start_stream())
-        self.start_button.grid(row=0, column=2, padx=5,pady=5, sticky="w")
+        self.start_button.grid(row=0, column=4, padx=5,pady=5, sticky="w")
         self.start_button.configure(bg="blue", fg="white")
 
         #stop stream button
         self.stop_button = Button(self.operations_frame, text="Stop Streaming", command= lambda: self.stop_stream())
-        self.stop_button.grid(row=0, column=3, padx=5,pady=5, sticky="w")
+        self.stop_button.grid(row=0, column=5, padx=5,pady=5, sticky="w")
         self.stop_button.configure(bg="orange", fg="white")
 
         self.identify_button = Button(self.operations_frame, text="Identify", command= lambda: self.identify())
-        self.identify_button.grid(row=0, column=4, padx=5,pady=5, sticky="w")
+        self.identify_button.grid(row=0, column=6, padx=5,pady=5, sticky="w")
         self.identify_button.configure(bg="purple", fg="white")
 
-        self.sensor_name_label = Label(self.operations_frame, text="")
-        self.sensor_name_label.grid(row=0, column=5, padx=5, pady=5, sticky="w")
+        
 
 
         # set up the data buffers
@@ -114,6 +122,16 @@ class StreamFrame(Frame):
         elif(self.log_var.get() == 1):
             print("setting to log data")
             self.s.set_log(1)
+
+    def set_gyro(self):
+        if(self.gyr_var.get() == 0):
+            print("setting no gyro")
+            self.s.set_gyr_select(0)
+           
+        elif(self.gyr_var.get() == 1):
+            print("setting to use gyro")
+            self.s.set_gyr_select(1)
+
             
     def get_usb_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -141,7 +159,6 @@ class StreamFrame(Frame):
         self.gyr_z_data.clear()
 
     def start_animation(self):
-        print(self.ani_is_running)
         if not self.ani_is_running:
             # Stop existing animation if any
             if self.ani:
@@ -156,7 +173,8 @@ class StreamFrame(Frame):
                 interval=10
             )
 
-            if(self.s.get_gyr_select()): # if the gyro is selected
+            if(self.s.get_gyr_select()==1): # if the gyro is selected
+                print("starting gryo animation")
 
                 self.ani1 = animation.FuncAnimation(
                     self.vag_gry_stream,
@@ -177,7 +195,7 @@ class StreamFrame(Frame):
             self.ani.event_source.stop()  # Stop the event source
             self.ani = None  # Clear the animation instance
 
-            if(self.s.get_gyr_select()):
+            if(self.s.get_gyr_select()==1):
                 self.ani1.event_source.stop()  # Stop the event source
                 self.ani1 = None  # Clear the animation instance
             self.ani_is_running = False
@@ -187,11 +205,15 @@ class StreamFrame(Frame):
     ## TODO:
     ## when the stream is stopped run the analysis pipeline and switch to the analyse component
     def start_stream(self):
+        self.ax.clear()
+        self.ax1.clear()
         message = f"START_STREAM 1\n"
         self.serial_int.send_message(message)
         print("Starting a new thread...")
         if(self.s.get_usb_port()):
-            self.data_streamer = ds.DataStreamer( self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial())
+            print(f"gyr select: {self.s.get_gyr_select()}")
+            self.data_streamer = ds.DataStreamer( self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial(),
+                                                  self.s.get_gyr_select())
             self.data_streamer.start()
             res = self.start_animation()
 
@@ -202,6 +224,7 @@ class StreamFrame(Frame):
         self.data_streamer.join() 
         self.stop_animation()
         self.reset_buffers()
+        
 
     def stream_data_callback(self, acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z, t_index):
         self.x_data.append(acc_x)

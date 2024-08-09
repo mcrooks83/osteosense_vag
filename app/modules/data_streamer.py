@@ -6,7 +6,7 @@ from datetime import datetime
 import csv
 
 class DataStreamer(threading.Thread):
-    def __init__(self, frame_length, cb, ser):
+    def __init__(self, frame_length, cb, ser, gyr):
         super().__init__()
         #self.port_name = port_name
         #self.baud_rate = baud_rate
@@ -17,6 +17,7 @@ class DataStreamer(threading.Thread):
         self.row_count = 0
         self.log = 0
         self.log_filename = ""
+        self.gyr = gyr
 
     
     def create_log_file(self):
@@ -64,7 +65,7 @@ class DataStreamer(threading.Thread):
             try:
                 if self.ser.in_waiting > 0:
                     row = self.ser.read(self.frame_length)
-                    acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = con.simple_convert(row)
+                    acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = con.simple_convert(row, self.gyr)
                     self.cb(acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z, self.row_count)
                     self.row_count = self.row_count + 1
 

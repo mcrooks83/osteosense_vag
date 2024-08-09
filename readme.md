@@ -16,7 +16,7 @@ The open source nature of this work invites collaboration so again, please do ge
 ## VAG
 VAG is a methodology and technique to "listen" to joints during in active motion.  OsteoSense VAG is initially focused on assessing the knee joint with the goal of classifying knee pathology (osteoarthritis).  The outcome of this work will be two fold, 1. to provide hardware and software tools and 2. to provide a robust methodology and solution to be used in the field.
 
-The technique relies on acceleration signals collected from the knee joint (patella) and processing the captured signal to produce discriminatory features. 
+The technique relies on acceleration signals collected from the knee joint (patella) and processing the captured signal to produce discriminatory features. In addition the angular velocity maybe useful for segmenting flexion / extension.
 
 ## Hardware
 
@@ -35,7 +35,10 @@ It allows two core views - stream and analyse.
 It is curently developed and test on Ubuntu and other platforms will be tested at a later date
 
 ### Stream
-The stream view allows data to be streamed from the sensor over USB and is used to test functionality of the sensor and also to provide the ability to observe motion in real time.
+The stream view allows data to be streamed from the sensor over USB and is used to test functionality of the sensor and also to provide the ability to observe motion in real time.  
+
+Data stream includes both accleration and angular velocity
+
 ### Analyse
 Analyse allows  logged data to be exported from the sensor and analysed. (more to come on this)
 
