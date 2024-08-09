@@ -2,6 +2,8 @@
 
 OsteoSense Vibroarthograpy (VAG) consists of a dedicated sensor and supporting software to explore VAG signals.  It is a collaboration between Right Step Health and TalTech Environmental Sensing Group supported by the Estonian Research Council via SekMo.
 
+https://www.rightstep-health.com/
+contact: mike@rightstep-health.com 
 
 ## VAG
 VAG is a methodology and technique to "listen" to sounds of joints during in active motion.  OsteoSense VAG is initially focused on assessing the knee joint with the goal of classifying knee pathology (osteoarthritis).  
