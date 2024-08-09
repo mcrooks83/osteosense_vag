@@ -11,6 +11,8 @@ If you are interested in this work then please do get in touch.
 
 We offer hardware and software to support musculoskeletal research activities particuarly around degnerative bone disorders.
 
+The open source nature of this work invites collaboration so again, please do get in touch if you wish to contribute.
+
 ## VAG
 VAG is a methodology and technique to "listen" to joints during in active motion.  OsteoSense VAG is initially focused on assessing the knee joint with the goal of classifying knee pathology (osteoarthritis).  The outcome of this work will be two fold, 1. to provide hardware and software tools and 2. to provide a robust methodology and solution to be used in the field.
 
