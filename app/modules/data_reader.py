@@ -24,7 +24,7 @@ class DataReader():
         print(f"parent {parent}")
         target_directory = os.path.join(parent, f"app/{self.output_dir}")
 
-        columns = ['x', 'y', 'z', 'mag']
+        columns = ['acc_x', 'acc_y', 'acc_z', 'a_mag', 'gyr_x', 'gyr_y', 'gyr_z']
         df = pd.DataFrame(data_to_export[0], columns=columns)
         df.to_csv(f"{target_directory}{self.output_file_name}.csv", index=False)
         
@@ -47,13 +47,13 @@ class DataReader():
                 print(f"waiting for device to mount")
                 time.sleep(1)
             
-            data_files = glob.glob(os.path.join(self.mount_point, '*.HIG'))
+            data_files = glob.glob(os.path.join(self.mount_point, '*.OST'))
             
             print(f"Files in {self.mount_point}:")
 
             for file in data_files:
                 print(f"converting data file {file}")
-                converted_data = con.get_results_v2_format(file)
+                converted_data = con.get_results_v2_format(file, self.frame_length)
                 written_csv = self.export_to_csv(converted_data)
                 self.path_to_csv = written_csv
                 self.cb(written_csv, self.path_to_csv)
@@ -70,12 +70,14 @@ class DataReader():
 
     # these are devices that are already mounted
     def get_usb_mount_points(self):
+        print("looking for devices")
         mount_points = []
         try:
             with open('/proc/mounts', 'r') as f:
                 for line in f.readlines():
                     if '/dev/sd' in line or '/dev/mmcblk' in line:  # Typically USB devices
                         parts = line.split()
+                        print(parts)
                         if len(parts) > 1:
                             mount_points.append(parts[1])
         except Exception as e:

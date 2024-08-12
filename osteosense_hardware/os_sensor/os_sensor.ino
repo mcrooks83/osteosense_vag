@@ -814,7 +814,7 @@ void loop()
     if (hasSD){
       while( dBufferIn != dBufferOut){
               
-          byte outputA[11];
+          byte outputA[17];  // 11 bytes 4 for time, 2 each for x,y,z accel (6) + 1 to end the packet. - add 6 bytes for gyro x,y,z
           
           //Generate output;
           outputA[0] = ptrTimeBuffer[dBufferOut * 4 + 3];
@@ -830,8 +830,17 @@ void loop()
           
           outputA[8] = highByte(accelerationz[dBufferOut]);
           outputA[9] = lowByte(accelerationz[dBufferOut]);
+
+          outputA[10] = highByte(gyrox[dBufferOut]);
+          outputA[11] = lowByte(gyrox[dBufferOut]);
+
+          outputA[12] = highByte(gyroy[dBufferOut]);
+          outputA[13] = lowByte(gyroy[dBufferOut]);
+
+          outputA[14] = highByte(gyroz[dBufferOut]);
+          outputA[15] = lowByte(gyroz[dBufferOut]);
   
-          outputA[10] = (0x0B);
+          outputA[16] = (0x0B);
   
           if(!dataFile.isOpen()){  dataFile = sd.open(filename,FILE_WRITE);}
           dataFile.write(outputA,sizeof(outputA)); 

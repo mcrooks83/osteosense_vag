@@ -149,6 +149,7 @@ class AnalyseFrame(Frame):
         self.usb_port_combo['values'] = []
         self.usb_port_combo.set('')
         devices = self.data_reader.get_usb_mount_points()
+        print(f"devices found: {devices}")
         for m in devices:
            self.usb_port_combo['values'] = (*self.usb_port_combo['values'], m)
 

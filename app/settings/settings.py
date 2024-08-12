@@ -10,7 +10,7 @@ class Settings:
         self.usb_port = "/dev/ttyACM0"
         self.mount_path = "/media/mike/641A-F4BD"
         self.baud_rate = 256000
-        self.frame_length = 11 # bytes
+        self.frame_length = 17 # bytes
         self.stream_frame_length = 14 # 16 for gyro
         self.gyr = 1 # gyr select
 

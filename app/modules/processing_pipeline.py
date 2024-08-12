@@ -14,10 +14,10 @@ def read_file(path):
     return df
 
 def extract_axes(df):
-    accel_x = df['x']
-    accel_y = df['y']
-    accel_z = df['z']
-    a_mag = df['mag'] 
+    accel_x = df['acc_x']
+    accel_y = df['acc_y']
+    accel_z = df['acc_z']
+    a_mag = df['a_mag'] 
 
     return accel_x, accel_y, accel_z, a_mag
 
