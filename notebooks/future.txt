@@ -1,0 +1,30 @@
+
+
+split the vag signals in half for extension and flexion
+
+consider FF (form Factor) a measure of complexity in the signal
+
+    standard deviation of the second derivative / standard deviation of the first derivative 
+    -----------------------------------------------------------------------------------------
+    standard deviation of the first derivative / standard deviation 
+
+
+compute the mean-squared (MS) values of a given VAG signal in ﬁxed-duration segments of 5 ms each,
+and then compute the variance of the values of the parameter over the entire duration of the signal
+
+Note that the VMS values represent the variability (variance) of power in the signal.
+
+Do this for extension and flexion phases also
+
+RBF network has been used for classifiation
+spread = 4
+with 15 hidden nodes, including the LOO procedure.
+
+Features:
+For a given VAG signal compute:
+VMS -> variance of the mean squared at 5ms intervals 
+VMS1 -> same as VMS but for extension phase
+VMS2 -> same but of flexion phase
+FD -> for complete signal 
+FD1 -> for extension phase
+FD2 -> for flexion phase
