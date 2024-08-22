@@ -53,6 +53,9 @@ Analyse allows  logged data to be exported from the sensor and analysed. (more t
 ### Components
 [structure of the application in terms of views - canvas, stream, analyse]
 ### Notebooks
+
+NOTE: these are being added to all the time and not updated here.  Check them out!
+
 a set of notebooks for understanding and analyzing VAG signals.  These are all in progress and incomplete but will be continually updated.
 
 |  Notebook|Description  |
