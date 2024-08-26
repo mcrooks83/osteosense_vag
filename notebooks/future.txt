@@ -1,3 +1,6 @@
+fft over segements of the signal may help determine things (power, intensity etc) - 100 - 500 hz
+cyclic loading produces a large varaibility in the normal patellofemoral joint 
+
 
 consider FF (form Factor) a measure of complexity in the signal
 
@@ -5,6 +8,7 @@ consider FF (form Factor) a measure of complexity in the signal
     -----------------------------------------------------------------------------------------
     standard deviation of the first derivative / standard deviation 
 
+Try to use a combination of features to improve classification
 
 RBF network has been used for classifiation
 spread = 4
@@ -18,3 +22,4 @@ VMS2 -> same but of flexion phase
 FD -> for complete signal 
 FD1 -> for extension phase
 FD2 -> for flexion phase
+
