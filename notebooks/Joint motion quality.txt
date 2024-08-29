@@ -1,0 +1,25 @@
+Estimated parameters: 
+variation of mean square (VMS), difference between
+mean of four maximum and mean of four minimum values (R4), 
+power spectral density for frequency of 50–250 Hz (P1) and 250–450 Hz (P2)
+
+50 Hz threshold for high-pass filtration
+
+1 cm above the apex of the patella
+
+Both flexion/extension motion and
+measuring condition constant velocities were kept at
+82 beats per minute with a metronome.
+
+
+The variability ofthe VAG signal was assessed by computing the mean-
+squared values of the obtained signal in fixed-duration
+segments of 5 ms each, and then by computing the vari-
+ance over the entire duration of the signal (VMS)
+
+The short-time spectra were obtained by computing the
+discrete Fourier transform of segments of 150 samples
+each, the Hanning window and a 100-sample overlap of
+each segment. The spectral activity was analyzed by
+summing the spectral power of the VAG signal in two
+bands: 50–250 Hz (P1) and 250–450 Hz (P2)
