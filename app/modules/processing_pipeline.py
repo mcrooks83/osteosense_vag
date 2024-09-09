@@ -4,7 +4,7 @@ sys.path.append("..")
 import pandas as pd
 import numpy as np
 from scipy.signal import medfilt, butter, filtfilt, lfilter, find_peaks, find_peaks_cwt,resample, detrend
-from scipy.signal import welch, spectrogram, get_window
+from scipy.signal import welch, spectrogram, get_window, stft
 import math
 import time
 import os, sys
@@ -40,13 +40,24 @@ def filter_signal(b, a, signal, filter):
         return lfilter(b, a, signal)
     elif(filter=="filtfilt"):
         return filtfilt(b, a, signal)
-    
+
+# previous version   
 def compute_fft_mag(data):
     fftpoints = int(math.pow(2, math.ceil(math.log2(len(data)))))
     print(f"computing fft with {fftpoints} points")
     fft = np.fft.fft(data, n=fftpoints)
     mag = np.abs(fft) #/ (fftpoints/2)
     return mag
+
+def compute_fft_mag_with_time(data, fs):
+    T = 1/fs
+    fftpoints = int(math.pow(2, math.ceil(math.log2(len(data)))))
+    fft = np.fft.fft(data, n=fftpoints)
+    mag = np.abs(fft) 
+    N_r =len(mag)//2
+    x = np.linspace(0.0, 1.0/(2.0*T), len(mag)//2).tolist()
+    y = mag[:N_r]
+    return x,y
 
 def fft_graph_values(data, sample_rate):
     T = 1/sample_rate
@@ -61,7 +72,8 @@ def compute_power_spectrum(fft_mag):
     return power
 
 def compute_frequency_band_percentages(f_interval, data, filter_settings):
-    b,a = build_filter((filter_settings["low_cut_off"], 0),  # no high cut off required
+    # filter was a high pass in this and now a bandpass
+    b,a = build_filter((filter_settings["low_cut_off"], filter_settings["high_cut_off"]),  
                         filter_settings["sampling_rate"], 
                         filter_settings["filter_type"], 
                         filter_settings["filter_order"])
@@ -90,7 +102,7 @@ def compute_frequency_band_percentages(f_interval, data, filter_settings):
     return interval_axis, band_percentages
 
 def compute_spectogram(data, filter_settings, spectogram_settings):
-    b,a = build_filter((filter_settings["low_cut_off"], 0),  # no high cut off required
+    b,a = build_filter((filter_settings["low_cut_off"], filter_settings["high_cut_off"]), 
                         filter_settings["sampling_rate"], 
                         filter_settings["filter_type"], 
                         filter_settings["filter_order"])
@@ -98,6 +110,32 @@ def compute_spectogram(data, filter_settings, spectogram_settings):
     f_a_mag = filter_signal(b,a, data, "filtfilt")
 
     window = get_window(spectogram_settings['window'], spectogram_settings['segment_length']) 
+    #op_sp_f, op_sp_t, op_Sxx = spectrogram(op_mag, fs=fs, window=window, nperseg=segment_length, noverlap=overlap, scaling='density')
     frequencies, times, Sxx = spectrogram(f_a_mag, fs=filter_settings["sampling_rate"], window=window, nperseg=spectogram_settings["segment_length"],
                                            noverlap=spectogram_settings['overlap'], scaling='density')
     return frequencies, times, Sxx
+
+def compute_freq_band_spectogram_from_stft(data, filter_settings, spectogram_settings, band):
+    print(band)
+    b,a = build_filter((filter_settings["low_cut_off"], filter_settings["high_cut_off"]), 
+                        filter_settings["sampling_rate"], 
+                        filter_settings["filter_type"], 
+                        filter_settings["filter_order"])
+
+    f_a_mag = filter_signal(b,a, data, "filtfilt")
+    window = get_window(spectogram_settings['window'], spectogram_settings['segment_length']) 
+
+    f, t, Zxx = stft(f_a_mag, fs=filter_settings["sampling_rate"], window=window,  nperseg=spectogram_settings["segment_length"],
+                         noverlap=spectogram_settings['overlap'])
+    
+    
+    # compute power from stft
+    op_pwr = np.abs(Zxx)**2
+    p_Zxx = 10 * np.log10(np.abs(op_pwr))
+    print(f)
+    freq_mask = (f >= band[0]) & (f <= band[1])  # Create a boolean mask
+    frequencies_filtered = f[freq_mask]  # Apply mask to frequencies
+    print(frequencies_filtered)
+    Zxx_dB_filtered = p_Zxx[freq_mask, :]  # Apply mask to spectrogram data
+
+    return frequencies_filtered, t, Zxx_dB_filtered

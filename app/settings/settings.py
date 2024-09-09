@@ -6,7 +6,7 @@ import os
 class Settings:
     def __init__(self):
 
-        self.test_file = "mc_test_2_60bpm.csv"
+        self.test_file = "TT_test_1.csv"
         self.usb_port = "/dev/ttyACM0"
         self.mount_path = "/media/mike/641A-F4BD"
         self.baud_rate = 256000
@@ -18,23 +18,31 @@ class Settings:
 
         self.BUFFER_SIZE = 10000
 
-        self.default_frame = 0 # 0 = stream, 1 = analyse
+        self.default_frame = 1 # 0 = stream, 1 = analyse
         self.log = 0
 
         # filter settings 
         self.sampling_rate = 6000 # 6kHz
-        self.filter_type = "high"
+        self.filter_type = "bandpass" # high
         self.low_cut_off = 100 # removes muscle artifacts and baseline wander
-        self.high_cut_off = -1
+        self.high_cut_off = 2000  # slightly higher than papers
         self.filter_order = 5   # 9th order has been used in literature?
 
         # spectogram settings
-        self.segment_length = 256  # Length of each segment
-        self.overlap = self.segment_length // 2  # 50% overlap
+        self.segment_length = 512  # Length of each segment
+        self.overlap =  100 #self.segment_length // 2  # 50% overlap
         self.window = 'hann'
+        self.f_band1 = (50, 250)
+        self.f_band2 = (250, 500)
 
         self.make_dirs()
 
+    def get_f_band1(self):
+        return self.f_band1
+    
+    def get_f_band2(self):
+        return self.f_band2
+    
     def get_gyr_select(self):
         return self.gyr
 
@@ -66,10 +74,11 @@ class Settings:
         }
         return spectogram_settings
 
-    def get_filter_settings_for_highpass(self):
+    def get_filter_settings_for_bandpass(self):
         filter_settings = {
             "sampling_rate": self.sampling_rate,
             "low_cut_off": self.low_cut_off,
+            "high_cut_off": self.high_cut_off,
             "filter_order": self.filter_order,
             "filter_type": self.filter_type
         }
