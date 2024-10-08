@@ -14,12 +14,3 @@ RBF network has been used for classifiation
 spread = 4
 with 15 hidden nodes, including the LOO procedure.
 
-Features:
-For a given VAG signal compute:
-VMS -> variance of the mean squared at 5ms intervals 
-VMS1 -> same as VMS but for extension phase
-VMS2 -> same but of flexion phase
-FD -> for complete signal 
-FD1 -> for extension phase
-FD2 -> for flexion phase
-
