@@ -55,6 +55,7 @@ Analyse allows  logged data to be exported from the sensor and analysed. (more t
 ### Notebooks
 
 NOTE: these are being added to all the time and not updated here.  Check them out!
+NOTE: there has been a restrucutre with the addition of ML tests
 
 a set of notebooks for understanding and analyzing VAG signals.  These are all in progress and incomplete but will be continually updated.
 
@@ -68,8 +69,10 @@ a set of notebooks for understanding and analyzing VAG signals.  These are all i
 |2.0.0.vag_explore.ipynb | exploration of VAG analysis methods|
 |2.0.1 signal_preprocessing.ipynb| exploration of filters |
 |2.1.vag_explore_1khz.ipynb | exploration of <1kHz as per papers|
-|vag_intensity.ipynb| loading intensity alogirthm from the sensor|
-|vag_study.ipynb| ways to analyse a cohort |
+|3.0.vag_open_data.ipynb | exploration of 89 VAG signals|
+|3.0.2.vag_open_data.ipynb | Fractal Index|
+|5.0.0.matrix_profiling.ipynb | Intro to Matrix Profiling|
+
 
 
 
