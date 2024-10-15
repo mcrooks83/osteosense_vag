@@ -1,3 +1,4 @@
 
 1. Test models with reduced feature sets
 2. spectral fractal dimensions
+3. develop a way to change spectrogram parameters, compute fd features and train models.
