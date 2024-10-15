@@ -1,0 +1,3 @@
+1. check VMS is computed correctly (does it use PWR or filtered accleration signal?)
+2. Test models with reduced feature sets
+3. spectral fractal dimensions
