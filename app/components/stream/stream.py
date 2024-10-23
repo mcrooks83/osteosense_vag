@@ -33,7 +33,7 @@ class StreamFrame(Frame):
         self.sensor_name_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
         self.log_var = IntVar()
-        self.gyr_var = IntVar(value=1)
+        self.gyr_var = IntVar(value=0)
         
         # Create radio buttons to switch frames
         self.log_rb = Checkbutton(self.operations_frame, text="log", onvalue=1, offvalue=0, variable = self.log_var, command=self.set_log)
@@ -58,9 +58,7 @@ class StreamFrame(Frame):
         self.identify_button.grid(row=0, column=6, padx=5,pady=5, sticky="w")
         self.identify_button.configure(bg="purple", fg="white")
 
-        
-
-
+    
         # set up the data buffers
         self.x_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.y_data = collections.deque(maxlen=self.s.get_buffer_size())
@@ -145,8 +143,8 @@ class StreamFrame(Frame):
         self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
         self.serial_int.open_serial_port()
         message = f"GET_SENSOR_NAME 1\n"
-        self.sensor_name = self.serial_int.send_message(message, rsp=1)
-        self.sensor_name_label.configure(text=self.sensor_name)
+        #self.sensor_name = self.serial_int.send_message(message, rsp=1)
+        #self.sensor_name_label.configure(text=self.sensor_name)
         self.start_button.config(state=NORMAL)
 
     def reset_buffers(self):
@@ -212,7 +210,9 @@ class StreamFrame(Frame):
         print("Starting a new thread...")
         if(self.s.get_usb_port()):
             print(f"gyr select: {self.s.get_gyr_select()}")
-            self.data_streamer = ds.DataStreamer( self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial(),
+
+            # conversion factor should be accessed and passed
+            self.data_streamer = ds.DataStreamer( self.s.get_conversion_4g(), self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial(),
                                                   self.s.get_gyr_select())
             self.data_streamer.start()
             res = self.start_animation()

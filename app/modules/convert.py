@@ -8,15 +8,15 @@ from math import sqrt
 #   b'\x00\x01\xc4\xb9\xff\xcb\xfb\xe4\x00\x83\x0b'
 #   divide by 1024 
 
-def simple_convert(row, gyr=0):
-    acc_x = (unpack('<h', bytes(row[2:4]))[0]  ) / 1024
-    acc_y = (unpack('<h', bytes(row[4:6]))[0]  ) / 1024
-    acc_z = (unpack('<h', bytes(row[6:8]))[0]  ) / 1024
+def simple_convert(row, conversion, gyr=0, ):
+    acc_x = (unpack('<h', bytes(row[2:4]))[0]) * conversion 
+    acc_y = (unpack('<h', bytes(row[4:6]))[0]) * conversion 
+    acc_z = (unpack('<h', bytes(row[6:8]))[0]) * conversion 
     
-    if(gyr):
-        gyr_x = (unpack('<h', bytes(row[8:10]))[0]  ) / 1024
-        gyr_y = (unpack('<h', bytes(row[10:12]))[0]  )/ 1024
-        gyr_z = (unpack('<h', bytes(row[12:14]))[0]  )/ 1024
+    if(gyr): # dont use this for now
+        gyr_x = (unpack('<h', bytes(row[8:10]))[0]  ) #/ 1024
+        gyr_y = (unpack('<h', bytes(row[10:12]))[0]  )#/ 1024
+        gyr_z = (unpack('<h', bytes(row[12:14]))[0]  )#/ 1024
 
         return acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z
     else:

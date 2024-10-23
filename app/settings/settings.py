@@ -10,15 +10,17 @@ class Settings:
         self.usb_port = "/dev/ttyACM0"
         self.mount_path = "/media/mike/641A-F4BD"
         self.baud_rate = 256000
-        self.frame_length = 17 # bytes
-        self.stream_frame_length = 14 # 16 for gyro
-        self.gyr = 1 # gyr select
+        self.frame_length = 11 # bytes - should be 11 if only acceleration
+        self.stream_frame_length = 8 # when streaming just acceleration
+        self.gyr = 0 # gyr select
+        self.conversion_4g = 0.000122
+        self.conversion_32g = 0.0009765625
 
         self.export_dir = "exports/"
 
         self.BUFFER_SIZE = 10000
 
-        self.default_frame = 1 # 0 = stream, 1 = analyse
+        self.default_frame = 0 # 0 = stream, 1 = analyse
         self.log = 0
 
         # filter settings 
@@ -37,6 +39,12 @@ class Settings:
 
         self.make_dirs()
 
+    def get_conversion_4g(self):
+        return self.conversion_4g
+    
+    def get_conversion_32g(self):
+        return self.conversion_32g
+    
     def get_f_band1(self):
         return self.f_band1
     
