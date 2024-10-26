@@ -15,6 +15,7 @@ class Settings:
         self.gyr = 0 # gyr select
         self.conversion_4g = 0.000122
         self.conversion_32g = 0.0009765625
+        self.conversion_16g = 0.000488
 
         self.export_dir = "exports/"
 
@@ -39,6 +40,8 @@ class Settings:
 
         self.make_dirs()
 
+    def get_conversion_16g(self):
+        return self.conversion_16g
     def get_conversion_4g(self):
         return self.conversion_4g
     

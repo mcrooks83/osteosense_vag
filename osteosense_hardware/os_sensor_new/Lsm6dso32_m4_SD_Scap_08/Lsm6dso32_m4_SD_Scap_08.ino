@@ -511,7 +511,7 @@ void setup()
     //No second low-pass filter
   digitalWrite(cSelect2, LOW);
     mySPI.transfer(0x10); //CTRL1_XL
-    mySPI.transfer(0xA0); //A0 6.66 kHz ±4 g AC 16g A4 32 g
+    mySPI.transfer(0xAC); //A0 6.66 kHz ±4 g   AC 16g   A4 32 g
   digitalWrite(cSelect2, HIGH); 
 //
 //

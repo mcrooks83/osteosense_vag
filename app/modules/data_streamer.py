@@ -67,8 +67,8 @@ class DataStreamer(threading.Thread):
                 if self.ser.in_waiting > 0:
                     row = self.ser.read(self.frame_length)
                     print(row)
-                    acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z = con.simple_convert(row, self.conversion, self.gyr )
-                    self.cb(acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z, self.row_count)
+                    acc_x, acc_y, acc_z, mag, gyr_x, gyr_y, gyr_z = con.simple_convert(row, self.conversion, self.gyr )
+                    self.cb(acc_x, acc_y, acc_z, mag, gyr_x, gyr_y, gyr_z, self.row_count)
                     self.row_count = self.row_count + 1
 
                     # write data to csv if logging is set

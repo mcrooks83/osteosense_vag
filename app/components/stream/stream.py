@@ -63,6 +63,7 @@ class StreamFrame(Frame):
         self.x_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.y_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.z_data = collections.deque(maxlen=self.s.get_buffer_size())
+        self.mag_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
 
         self.gyr_x_data = collections.deque(maxlen=self.s.get_buffer_size())
@@ -167,7 +168,7 @@ class StreamFrame(Frame):
             self.ani = animation.FuncAnimation(
                 self.vag_stream,
                 self.animate,
-                fargs=(self.time_index, self.x_data, self.y_data, self.z_data),
+                fargs=(self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data),
                 interval=10
             )
 
@@ -212,7 +213,7 @@ class StreamFrame(Frame):
             print(f"gyr select: {self.s.get_gyr_select()}")
 
             # conversion factor should be accessed and passed
-            self.data_streamer = ds.DataStreamer( self.s.get_conversion_4g(), self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial(),
+            self.data_streamer = ds.DataStreamer( self.s.get_conversion_16g(), self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial(),
                                                   self.s.get_gyr_select())
             self.data_streamer.start()
             res = self.start_animation()
@@ -226,21 +227,23 @@ class StreamFrame(Frame):
         self.reset_buffers()
         
 
-    def stream_data_callback(self, acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z, t_index):
+    def stream_data_callback(self, acc_x, acc_y, acc_z, mag, gyr_x, gyr_y, gyr_z, t_index):
         self.x_data.append(acc_x)
         self.y_data.append(acc_y)
         self.z_data.append(acc_z)
+        self.mag_data.append(mag)
         if(self.s.get_gyr_select()):
             self.gyr_x_data.append(gyr_x)
             self.gyr_y_data.append(gyr_y)
             self.gyr_z_data.append(gyr_z)
         self.time_index.append(t_index)
 
-    def animate(self, i, tx, accel_x, accel_y, accel_z):
+    def animate(self, i, tx, accel_x, accel_y, accel_z, mag):
         self.ax.clear()
         self.ax.plot(tx, accel_x, label="x accel", linewidth=1)
         self.ax.plot(tx, accel_y, label="y accel", linewidth=1)
         self.ax.plot(tx, accel_z, label="z accel", linewidth=1)
+        self.ax.plot(tx, mag, label="mag", linewidth=1)
         self.ax.legend()
         self.ax.grid(True)
         self.ax.set_ylim(-10, 10)
