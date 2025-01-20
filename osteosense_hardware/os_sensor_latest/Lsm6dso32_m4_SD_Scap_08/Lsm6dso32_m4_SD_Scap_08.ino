@@ -43,7 +43,7 @@ Adafruit_DotStar strip(DOTSTAR_NUM, PIN_DOTSTAR_DATA, PIN_DOTSTAR_CLK, DOTSTAR_B
 
 RV3028 rtc;
 
-uint32_t sampleRate = 6000; // hZ 
+uint32_t sampleRate = 3300; // hZ -> this is quite correct?
 //const int led2 = 13;
 //const int debugPin = 5;
 byte enableInt = 0;
@@ -511,7 +511,7 @@ void setup()
     //No second low-pass filter
   digitalWrite(cSelect2, LOW);
     mySPI.transfer(0x10); //CTRL1_XL
-    mySPI.transfer(0xAC); //A0 6.66 kHz ±4 g   AC 16g   A4 32 g
+    mySPI.transfer(0x90); //90 3.3khz ±4 g    //A0 6.66 kHz ±4 g   AC 16g   A4 32 g   1 0 0 1 3.33 kHz (high performance) 3.33 kHz (high performance)
   digitalWrite(cSelect2, HIGH); 
 //
 //

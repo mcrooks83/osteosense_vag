@@ -12,7 +12,8 @@ class Settings:
         self.baud_rate = 256000
         self.frame_length = 11 # bytes - should be 11 if only acceleration
         self.stream_frame_length = 8 # when streaming just acceleration
-        self.gyr = 0 # gyr select
+        self.sonify = 1 # sonfigy select
+
         self.conversion_4g = 0.000122
         self.conversion_32g = 0.0009765625
         self.conversion_16g = 0.000488
@@ -25,10 +26,12 @@ class Settings:
         self.log = 0
 
         # filter settings 
-        self.sampling_rate = 6000 # 6kHz
+        self.sampling_rate = 3300 # 3.3Khz
         self.filter_type = "bandpass" # high
+
+        # these could be settable in the UI
         self.low_cut_off = 100 # removes muscle artifacts and baseline wander
-        self.high_cut_off = 2000  # slightly higher than papers
+        self.high_cut_off = 1000  # slightly higher than papers
         self.filter_order = 5   # 9th order has been used in literature?
 
         # spectogram settings
@@ -42,6 +45,7 @@ class Settings:
 
     def get_conversion_16g(self):
         return self.conversion_16g
+
     def get_conversion_4g(self):
         return self.conversion_4g
     
@@ -54,11 +58,11 @@ class Settings:
     def get_f_band2(self):
         return self.f_band2
     
-    def get_gyr_select(self):
-        return self.gyr
+    def get_sonify_select(self):
+        return self.sonify
 
-    def set_gyr_select(self, value):
-        self.gyr = value
+    def set_sonify_select(self, value):
+        self.sonify = value
 
     def make_dirs(self):
         if not os.path.exists(self.export_dir):

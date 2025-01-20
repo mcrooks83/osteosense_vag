@@ -3,24 +3,28 @@ from modules import convert as con
 import threading
 import os
 from datetime import datetime
+from scipy.signal import butter, filtfilt, resample, lfilter
 import csv
 
+
 class DataStreamer(threading.Thread):
-    def __init__(self, conversion, frame_length, cb, ser, gyr):
+    def __init__(self, settings,  conversion, frame_length, cb, ser, gyr, audio_processor):
         super().__init__()
         #self.port_name = port_name
         #self.baud_rate = baud_rate
+        self.s = settings
         self.conversion = conversion
         self.frame_length = frame_length
         self.ser = ser
         self.running = True
-        self.cb = cb
+        self.cb = cb # stream callback to display data
         self.row_count = 0
         self.log = 0
         self.log_filename = ""
         self.gyr = gyr
+        self.audio_processor = audio_processor # so we can put data on it
 
-    
+
     def create_log_file(self):
         current_directory = os.getcwd()
         parent = os.path.abspath(os.path.join(current_directory, os.pardir))
@@ -61,14 +65,18 @@ class DataStreamer(threading.Thread):
                 self.poll_usb_port()
             #self.close_serial_port()
 
-
     def poll_usb_port(self):
             try:
                 if self.ser.in_waiting > 0:
                     row = self.ser.read(self.frame_length)
-                    print(row)
-                    acc_x, acc_y, acc_z, mag, gyr_x, gyr_y, gyr_z = con.simple_convert(row, self.conversion, self.gyr )
-                    self.cb(acc_x, acc_y, acc_z, mag, gyr_x, gyr_y, gyr_z, self.row_count)
+                    #print(row)
+                    acc_x, acc_y, acc_z, mag = con.simple_convert(row, self.conversion, self.gyr )
+                    
+                    self.cb(acc_x, acc_y, acc_z, mag, self.row_count)
+
+                    # send the magnitude to audio queue (this also filters like vag so is reproduced)
+                    self.audio_processor.data_queue.put(mag)
+
                     self.row_count = self.row_count + 1
 
                     # write data to csv if logging is set
