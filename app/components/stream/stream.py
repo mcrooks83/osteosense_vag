@@ -46,9 +46,13 @@ class StreamFrame(Frame):
         #self.log_rb.grid(row=0, column=2, pady=5, sticky="w")
 
         self.sonify_rb = Checkbutton(self.operations_frame, text="sonify", onvalue=1, offvalue=0, variable=self.sonify_var, command=self.set_sonify)
-        self.sonify_rb.grid(row=0, column=3, pady=5, sticky="w")
+        self.sonify_rb.grid(row=0, column=6, pady=5, sticky="w")
 
         # Start and Stop buttons
+        self.poll_device = Button(self.operations_frame, text="Find Device", command=lambda: self.get_usb_ports())
+        self.poll_device.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        self.poll_device.configure(bg="red", fg="white")
+
         self.start_button = Button(self.operations_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream())
         self.start_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
         self.start_button.configure(bg="blue", fg="white")
@@ -151,10 +155,14 @@ class StreamFrame(Frame):
         elif(self.sonify_var.get() == 1):
             self.s.set_sonify_select(1)
             
+    # will only detect the sensor when it is connected
+    # move this to serial_internface.py
     def get_usb_ports(self):
         ports = serial.tools.list_ports.comports()
-        for port in ports:
-            self.usb_port_combo['values'] = (*self.usb_port_combo['values'], port.device)
+        usb_ports = [port.device for port in ports if 'ACM' in port.device]
+        self.usb_port_combo['values'] = usb_ports
+        #for port in ports:
+        #    self.usb_port_combo['values'] = (*self.usb_port_combo['values'], port.device)
 
     def on_usb_port_combo_select(self, event):
         selected_usb_port = self.usb_port_combo.get()
