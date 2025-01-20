@@ -69,7 +69,6 @@ class DataStreamer(threading.Thread):
             try:
                 if self.ser.in_waiting > 0:
                     row = self.ser.read(self.frame_length)
-                    #print(row)
                     acc_x, acc_y, acc_z, mag = con.simple_convert(row, self.conversion, self.gyr )
                     
                     self.cb(acc_x, acc_y, acc_z, mag, self.row_count)

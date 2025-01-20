@@ -12,7 +12,7 @@ class AudioProcessor(threading.Thread):
         self.s = settings
         self.cb = cb
         self.audio_sampling_rate=3300  # same as sampling rate for the sensor
-        self.buffer_size=1024
+        self.buffer_size=512
         self.data_queue = queue.Queue()
         self.audio_buffer = []  # Buffer for storing magnitdue data
 
@@ -49,9 +49,6 @@ class AudioProcessor(threading.Thread):
             chunk = self.filter_input_stream(chunk)
             self.cb(chunk)
 
-            # Resample to match audio sampling rate
-            #chunk_resampled = resample(chunk, int(len(chunk) * self.audio_sampling_rate / self.s.get_filter_settings_for_bandpass()["sampling_rate"]))
-            #print("resampled", len(chunk_resampled))
             # Normalize for audio playback
             chunk_norm = chunk / np.max(np.abs(chunk))
 
@@ -66,7 +63,7 @@ class AudioProcessor(threading.Thread):
         with sd.OutputStream(
             samplerate=self.audio_sampling_rate,
             blocksize=self.buffer_size,
-            channels=1,
+            channels=2,
             callback=self._audio_callback
         ):
             print("Playing stream in real-time. Press stop to end.")

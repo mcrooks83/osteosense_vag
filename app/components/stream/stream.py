@@ -76,7 +76,6 @@ class StreamFrame(Frame):
         self.segment_length = 1024
         self.hann_window = hann(self.segment_length)
         self.overlap = self.segment_length // 2  # 50% overlap
-
         self.im = None  # For storing the image object to update later
 
         # Acceleration Graph
@@ -192,8 +191,7 @@ class StreamFrame(Frame):
 
             if(self.s.get_sonify_select()==1): # 
                 print("starting vag animation")
-                print(self.vag_signal)
-
+        
                 self.ani1 = animation.FuncAnimation(
                     self.vag_sonify_stream,
                     self.animate1,
