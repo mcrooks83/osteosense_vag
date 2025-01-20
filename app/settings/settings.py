@@ -13,6 +13,7 @@ class Settings:
         self.frame_length = 11 # bytes - should be 11 if only acceleration
         self.stream_frame_length = 8 # when streaming just acceleration
         self.sonify = 1 # sonfigy select
+        #self.g_level = 9.8
 
         self.conversion_4g = 0.000122
         self.conversion_32g = 0.0009765625

@@ -11,6 +11,7 @@ import serial.tools.list_ports
 from modules import audio_processor as ap
 import numpy as np
 from scipy.signal import spectrogram, stft
+from scipy.signal.windows import hann
 
 class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
@@ -67,8 +68,14 @@ class StreamFrame(Frame):
         self.mag_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
         self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size())
-        self.spectrograms = collections.deque(maxlen=10)  # Store a fixed number of spectrograms
+        self.spectrograms = collections.deque(maxlen=10)  # Store a fixed number of spectrograms'
+
+
+        # probably better in settings
         self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over.
+        self.segment_length = 1024
+        self.hann_window = hann(self.segment_length)
+        self.overlap = self.segment_length // 2  # 50% overlap
 
         self.im = None  # For storing the image object to update later
 
@@ -90,7 +97,7 @@ class StreamFrame(Frame):
         self.vag_sonify_stream = Figure()
         self.ax1 = self.vag_sonify_stream.subplots()
         self.ax1.set_title(f"VAG Signal")
-        self.ax1.set_ylim(-10, 10)
+        self.ax1.set_ylim(-2, 2)
         self.ax1.set_xlabel("packet count", fontsize=8)
         self.ax1.set_ylabel("", fontsize=8)
 
@@ -277,7 +284,7 @@ class StreamFrame(Frame):
         #, t, Sxx = spectrogram(signal_data, fs=3300, nperseg=1024)
 
         #Compute the STFT (using scipy's stft function)
-        f, t, Zxx = stft(signal_data, fs=3300, nperseg=512)
+        f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
 
         # Convert the complex STFT to magnitude for the spectrogram
         Sxx = np.abs(Zxx)
@@ -309,12 +316,10 @@ class StreamFrame(Frame):
         self.ax1.plot(vag, label="vag signal", linewidth=1)
         self.ax1.legend()
         self.ax1.grid(True)
-        self.ax1.set_ylim(-10, 10)
+        self.ax1.set_ylim(-4, 4)
     
     def animate2(self, i,  spectrograms):
         #self.ax2.clear()
-
-        
         if not spectrograms:
             return
 
