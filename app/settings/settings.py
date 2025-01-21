@@ -44,6 +44,9 @@ class Settings:
 
         self.make_dirs()
 
+    def get_sampling_rate(self):
+        return self.sampling_rate
+        
     def get_conversion_16g(self):
         return self.conversion_16g
 

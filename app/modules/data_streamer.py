@@ -5,10 +5,11 @@ import os
 from datetime import datetime
 from scipy.signal import butter, filtfilt, resample, lfilter
 import csv
+import numpy as np
 
 
 class DataStreamer(threading.Thread):
-    def __init__(self, settings,  conversion, frame_length, cb, ser, gyr, audio_processor):
+    def __init__(self, settings,  conversion, frame_length, cb, vag_cb, ser, gyr, audio_processor):
         super().__init__()
         #self.port_name = port_name
         #self.baud_rate = baud_rate
@@ -18,12 +19,26 @@ class DataStreamer(threading.Thread):
         self.ser = ser
         self.running = True
         self.cb = cb # stream callback to display data
+        self.vag_cb = vag_cb
         self.row_count = 0
         self.log = 0
         self.log_filename = ""
         self.gyr = gyr
         self.audio_processor = audio_processor # so we can put data on it
+        self.audio_buffer = []  # Buffer for storing a chunk of vag data to pass to the audio_processor
+        self.buffer_size = 512
+        # create a bandpass filter
+        filter_settings = self.s.get_filter_settings_for_bandpass()
+        b, a = butter(filter_settings["filter_order"], [filter_settings["low_cut_off"], filter_settings["high_cut_off"]], btype='bandpass', fs=filter_settings["sampling_rate"])
+        self.b = b
+        self.a = a
+        self.chunk = []
 
+    def get_audio_buffer_size(self):
+        return self.buffer_size
+
+    def filter_input_stream(self,data):
+        return filtfilt(self.b, self.a, data)
 
     def create_log_file(self):
         current_directory = os.getcwd()
@@ -71,12 +86,25 @@ class DataStreamer(threading.Thread):
                     row = self.ser.read(self.frame_length)
                     acc_x, acc_y, acc_z, mag = con.simple_convert(row, self.conversion, self.gyr )
                     
+                    # put raw data on UI
                     self.cb(acc_x, acc_y, acc_z, mag, self.row_count)
+                    self.row_count = self.row_count + 1
+
+                    self.audio_buffer.append(mag)  # Store the sample in the buffer
+
+                    if len(self.audio_buffer) >= self.buffer_size:
+                        self.chunk = np.array(self.audio_buffer[:self.buffer_size])  # Take the first buffer_size samples
+                        self.audio_buffer = self.audio_buffer[self.buffer_size:]  # Remove the processed samples
+
+                        # band pass filter
+                        self.chunk = self.filter_input_stream(self.chunk)
+                        self.vag_cb(self.chunk)
 
                     # send the magnitude to audio queue (this also filters like vag so is reproduced)
-                    self.audio_processor.data_queue.put(mag)
-
-                    self.row_count = self.row_count + 1
+                    # only do this is sonfiy is selected
+                    if(self.s.get_sonify_select()==1):
+                        
+                        self.audio_processor.data_queue.put(self.chunk)
 
                     # write data to csv if logging is set
                     if(self.log == 1):

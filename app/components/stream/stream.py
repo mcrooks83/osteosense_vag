@@ -12,6 +12,7 @@ from modules import audio_processor as ap
 import numpy as np
 from scipy.signal import spectrogram, stft
 from scipy.signal.windows import hann
+from components.stream import level_meter as lm
 
 class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
@@ -28,38 +29,44 @@ class StreamFrame(Frame):
         # Create a frame for operations and controls (buttons)
         self.operations_frame = Frame(self)
         self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.operations_frame.grid_columnconfigure(0, weight=1)
+
+        # create a frame for the control buttons
+        self.ctl_buttons_frame = Frame(self.operations_frame)
+        self.ctl_buttons_frame.grid(row=0, column=0, sticky="w")
 
         # Create a combobox for USB ports
-        self.usb_port_combo = Combobox(self.operations_frame, values=[])
+        self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
         self.usb_port_combo.grid(row=0, column=0, padx=10, pady=10)
         self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
 
-        self.sensor_name_label = Label(self.operations_frame, text="")
-        self.sensor_name_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        #self.sensor_name_label = Label(self.operations_frame, text="")
+        #self.sensor_name_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
         self.log_var = IntVar()
         self.sonify_var = IntVar(value=1)
 
-        # Create radio buttons to switch frames
+        # this will be used to record - it should record the VAG signal rather than the raw data set    
         #self.log_rb = Checkbutton(self.operations_frame, text="log", onvalue=1, offvalue=0, variable=self.log_var, command=self.set_log)
         #self.log_rb.grid(row=0, column=2, pady=5, sticky="w")
 
-        self.sonify_rb = Checkbutton(self.operations_frame, text="sonify", onvalue=1, offvalue=0, variable=self.sonify_var, command=self.set_sonify)
-        self.sonify_rb.grid(row=0, column=6, pady=5, sticky="w")
-
         # Start and Stop buttons
-        self.poll_device = Button(self.operations_frame, text="Find Device", command=lambda: self.get_usb_ports())
+        self.poll_device = Button(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports())
         self.poll_device.grid(row=0, column=3, padx=5, pady=5, sticky="w")
         self.poll_device.configure(bg="red", fg="white")
 
-        self.start_button = Button(self.operations_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream())
+        self.start_button = Button(self.ctl_buttons_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream())
         self.start_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
         self.start_button.configure(bg="blue", fg="white")
 
-        self.stop_button = Button(self.operations_frame, text="Stop Streaming", command=lambda: self.stop_stream())
+        self.stop_button = Button(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream())
         self.stop_button.grid(row=0, column=5, padx=5, pady=5, sticky="w")
         self.stop_button.configure(bg="orange", fg="white")
+
+         # starts on and if it is off there is no audio processed
+        self.sonify_rb = Checkbutton(self.ctl_buttons_frame, text="sonify", onvalue=1, offvalue=0, variable=self.sonify_var, command=self.set_sonify)
+        self.sonify_rb.grid(row=0, column=6, pady=5, sticky="w")
 
         #self.identify_button = Button(self.operations_frame, text="Identify", command=lambda: self.identify())
         #self.identify_button.grid(row=0, column=6, padx=5, pady=5, sticky="w")
@@ -82,6 +89,11 @@ class StreamFrame(Frame):
         self.overlap = self.segment_length // 2  # 50% overlap
         self.im = None  # For storing the image object to update later
 
+
+        self.meter = lm.LevelMeter(self.operations_frame)
+        self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=10, sticky="nsew")
+        #self.meter.start_animation()
+
         # Acceleration Graph
         self.vag_stream = Figure(figsize=(6, 3))
         self.ax = self.vag_stream.subplots()
@@ -94,7 +106,7 @@ class StreamFrame(Frame):
         self.ax.autoscale(True)
         
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self)
-        self.vag_stream_canvas.get_tk_widget().grid(row=1, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
+        self.vag_stream_canvas.get_tk_widget().grid(row=2, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
 
         # Vag signal
         self.vag_sonify_stream = Figure()
@@ -115,7 +127,7 @@ class StreamFrame(Frame):
 
         # Bottom section split in two
         self.output_frame = Frame(self)
-        self.output_frame.grid(row=2, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
+        self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
         self.output_frame.grid_columnconfigure(0, weight=1)
         self.output_frame.grid_columnconfigure(1, weight=1)
 
@@ -132,7 +144,7 @@ class StreamFrame(Frame):
         self.data_streamer = None
         self.serial_int = None
         self.sensor_name = ""
-        self.start_animation()
+        
 
 
     def identify(self):
@@ -197,15 +209,13 @@ class StreamFrame(Frame):
                 interval=10
             )
 
-            if(self.s.get_sonify_select()==1): # 
-                print("starting vag animation")
-        
-                self.ani1 = animation.FuncAnimation(
-                    self.vag_sonify_stream,
-                    self.animate1,
-                    fargs=( self.vag_signal, ),
-                    interval=10
-                )
+          
+            self.ani1 = animation.FuncAnimation(
+                self.vag_sonify_stream,
+                self.animate1,
+                fargs=( self.vag_signal, ),
+                interval=10
+            )
             
             # spectogram
             self.ani2 = animation.FuncAnimation(
@@ -219,6 +229,10 @@ class StreamFrame(Frame):
             self.vag_heatmap_stream_canvas.draw()
             self.vag_stream_canvas.draw()
             self.ani_is_running = True
+
+            # start level meter
+            #self.meter.start_animation()    
+
             return "Animation started"
         else:
             return "Animation already running"
@@ -228,9 +242,11 @@ class StreamFrame(Frame):
             self.ani.event_source.stop()  # Stop the event source
             self.ani = None  # Clear the animation instance
 
-            if(self.s.get_sonify_select()==1):
-                self.ani1.event_source.stop()  # Stop the event source
-                self.ani1 = None  # Clear the animation instance
+            # this is the vag signal 
+            self.ani1.event_source.stop()  # Stop the event source
+            self.ani1 = None  # Clear the animation instance
+            
+            # this is the heatmap
             self.ani2.event_source.stop()  # Stop the event source
             self.ani2 = None  # Clear the animation instance
             self.ani_is_running = False
@@ -240,27 +256,34 @@ class StreamFrame(Frame):
     ## TODO:
     ## when the stream is stopped run the analysis pipeline and switch to the analyse component
     def start_stream(self):
-        self.ax.clear()
-        self.ax1.clear()
+        
+        #self.ax.clear()
+        #self.ax1.clear()
         message = f"START_STREAM 1\n"
         #self.serial_int.send_message(message)
+
+
         print("Starting a new thread...")
         if(self.s.get_usb_port()):
             print(f"sonify select: {self.s.get_sonify_select()}")
 
-             # start the audio processor
-             # put a vag callback here?
-            self.audio_processor = ap.AudioProcessor(self.s, self.vag_stream_callback)
-            self.audio_processor.start()
+            self.audio_processor = ap.AudioProcessor(self.s)
+
+            if(self.s.get_sonify_select()==1):    
+                self.audio_processor.start()
 
             # conversion factor should be accessed and passed
             # may need a UI component to alter this in the future
             # VAG is 4G 3.3kHz
-            self.data_streamer = ds.DataStreamer(self.s, self.s.get_conversion_4g(), self.s.get_stream_frame_length(), self.stream_data_callback, self.serial_int.get_serial(),
+            self.data_streamer = ds.DataStreamer(self.s, self.s.get_conversion_4g(), self.s.get_stream_frame_length(), 
+                                                self.stream_data_callback, self.vag_stream_callback,
+                                                self.serial_int.get_serial(),
                                                   self.s.get_sonify_select(), self.audio_processor)
             self.data_streamer.start()
 
             res = self.start_animation()
+
+           
 
     def stop_stream(self):
         message = f"STOP_STREAM 0\n"
@@ -268,16 +291,17 @@ class StreamFrame(Frame):
         self.data_streamer.stop()
         self.data_streamer.join() 
 
-        self.audio_processor.stop()
-        self.audio_processor.join()
+        if(self.s.get_sonify_select()==1): 
+            self.audio_processor.stop()
+            self.audio_processor.join()
 
         self.stop_animation()
         self.reset_buffers()
         
 
     def vag_stream_callback(self, vag):
-        if(self.s.get_sonify_select()):
-            self.vag_signal.extend(vag)
+        
+        self.vag_signal.extend(vag)
         
         # compute spectogram 
         if len(self.vag_signal) >= self.spec_data_size:
