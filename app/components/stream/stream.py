@@ -1,9 +1,11 @@
 from tkinter import  Frame,Label, Button, NORMAL, DISABLED, IntVar, Checkbutton
 from tkinter.ttk import Combobox
+import matplotlib
 from matplotlib.pyplot import Figure
 import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,NavigationToolbar2Tk)
 from matplotlib import style
+
 import collections
 from modules import data_streamer as ds
 from modules import serial_interface as si # serial port operations including sending messages to the device
@@ -13,6 +15,7 @@ import numpy as np
 from scipy.signal import spectrogram, stft
 from scipy.signal.windows import hann
 from components.stream import level_meter as lm
+import threading
 
 
 class StreamFrame(Frame):
@@ -82,7 +85,6 @@ class StreamFrame(Frame):
         self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size())
         self.spectrograms = collections.deque(maxlen=20)  # Store a fixed number of spectrograms'
 
-
         # probably better in settings
         self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over.
         self.segment_length = 1024
@@ -90,10 +92,8 @@ class StreamFrame(Frame):
         self.overlap = self.segment_length // 2  # 50% overlap
         self.im = None  # For storing the image object to update later
 
-
         self.meter = lm.LevelMeter(self.operations_frame)
         self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=10, sticky="nsew")
-        #self.meter.start_animation()
 
         # Acceleration Graph
         self.vag_stream = Figure(figsize=(6, 3))
@@ -116,7 +116,6 @@ class StreamFrame(Frame):
         self.ax1.set_ylim(-2, 2)
         self.ax1.set_xlabel("packet count", fontsize=8)
         self.ax1.set_ylabel("", fontsize=8)
-
         self.ax1.xaxis.set_ticks_position('bottom')
         self.ax1.yaxis.set_ticks_position('left')
         self.ax1.autoscale(True)
@@ -193,6 +192,19 @@ class StreamFrame(Frame):
         self.mag_data.clear()
         self.vag_signal.clear()
 
+    def start_ani(self, ax, animate_func, *args):
+        """Helper function to start a FuncAnimation on a separate thread."""
+        ani = animation.FuncAnimation(
+            ax,
+            animate_func,
+            cache_frame_data=False,
+            fargs=args,
+            interval=10
+        )
+
+        ax.figure.canvas.draw()
+        return ani
+
     def start_animation(self):
         self.meter.start_level_meter() # starts the level meter
         if not self.ani_is_running:
@@ -201,40 +213,50 @@ class StreamFrame(Frame):
                 self.stop_animation()
 
             print("starting a new animation")
+
+            # possible performance improvement -> run each graph in a thead.
+            #threading.Thread(target=self.start_ani, 
+            #    args=(self.vag_stream, self.animate, self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data)).start()
+
+            #threading.Thread(target=self.start_ani, args=(self.vag_stream, self.animate, self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data)).start()
+            #threading.Thread(target=self.start_ani, args=(self.vag_sonify_stream, self.animate1, self.vag_signal)).start()
+            #threading.Thread(target=self.start_ani, args=(self.vag_spectrum_stream, self.animate2, self.spectrograms)).start()
            
+            
             self.ani = animation.FuncAnimation(
                 self.vag_stream,
                 self.animate,
-                cache_frame_data=False,
+                cache_frame_data=True,
+                save_count = 10,
                 fargs=(self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data),
-                #interval=10
+                interval=10
             )
 
           
             self.ani1 = animation.FuncAnimation(
                 self.vag_sonify_stream,
                 self.animate1,
-                cache_frame_data=False,
+                cache_frame_data=True,
+                save_count = 10,
                 fargs=( self.vag_signal, ),
-                #interval=10
+                interval=10
             )
             
             # spectogram
             self.ani2 = animation.FuncAnimation(
                self.vag_spectrum_stream,  # graph to update
                self.animate2, # function callback
-               cache_frame_data=False,
+               cache_frame_data=True,
+               save_count = 10,
                fargs=( self.spectrograms, ),
-               #interval=10
+               interval=10
             )
 
             self.vag_sonify_stream_canvas.draw()
             self.vag_heatmap_stream_canvas.draw()
             self.vag_stream_canvas.draw()
+            
             self.ani_is_running = True
-
-            # start level meter
-            #self.meter.start_animation()    
 
             return "Animation started"
         else:
@@ -245,7 +267,7 @@ class StreamFrame(Frame):
 
             # stop the level meter
             self.meter.stop_level_meter()
-
+            
             self.ani.event_source.stop()  # Stop the event source
             self.ani = None  # Clear the animation instance
 
@@ -260,8 +282,6 @@ class StreamFrame(Frame):
             return "Animation stopped"
         return "No animation to stop"
     
-    ## TODO:
-    ## when the stream is stopped run the analysis pipeline and switch to the analyse component
     def start_stream(self):
         
         #self.ax.clear()
@@ -298,9 +318,6 @@ class StreamFrame(Frame):
         #self.serial_int.send_message(message)
         self.data_streamer.stop()
         self.data_streamer.join() 
-
-        
-
         self.stop_animation()
         self.reset_buffers()
         
