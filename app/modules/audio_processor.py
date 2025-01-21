@@ -24,13 +24,7 @@ class AudioProcessor(threading.Thread):
         while not self.data_queue.empty():
             self.chunk = self.data_queue.get()
 
-        #print(f"Audio callback: outdata length = {len(outdata)}, audio_buffer length = {len(self.audio_buffer)}") 
-
         if len(self.chunk) >= self.buffer_size:
-            #chunk = np.array(self.audio_buffer[:self.buffer_size])  # Take the first buffer_size samples
-            #self.audio_buffer = self.audio_buffer[self.buffer_size:]  # Remove the processed samples
-            # only play the vag signal if sonfiy is selected
-            
             # Normalize for audio playback
             self.chunk = self.chunk / np.max(np.abs(self.chunk))
 
@@ -50,7 +44,7 @@ class AudioProcessor(threading.Thread):
         ):
             print("Playing stream in real-time. Press stop to end.")
             while self.running:
-                sd.sleep(1000)  # Sleep for 1 second
+                sd.sleep(500)  # Sleep for 0.5 second
 
     def stop(self):
         self.running = False
