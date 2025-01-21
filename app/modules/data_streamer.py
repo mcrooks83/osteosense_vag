@@ -6,10 +6,12 @@ from datetime import datetime
 from scipy.signal import butter, filtfilt, resample, lfilter
 import csv
 import numpy as np
+from scipy.signal import spectrogram, stft
+from scipy.signal.windows import hann
 
 
 class DataStreamer(threading.Thread):
-    def __init__(self, settings,  conversion, frame_length, cb, vag_cb, ser, gyr, audio_processor):
+    def __init__(self, settings,  conversion, frame_length, cb, vag_cb,  ser, gyr, audio_processor):
         super().__init__()
         #self.port_name = port_name
         #self.baud_rate = baud_rate
@@ -20,6 +22,7 @@ class DataStreamer(threading.Thread):
         self.running = True
         self.cb = cb # stream callback to display data
         self.vag_cb = vag_cb
+        #self.spec_cb = spec_cb
         self.row_count = 0
         self.log = 0
         self.log_filename = ""
@@ -33,6 +36,27 @@ class DataStreamer(threading.Thread):
         self.b = b
         self.a = a
         self.chunk = []
+
+        # spectrogram
+        # probably better in settings
+        self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over.
+        self.segment_length = 1024
+        self.hann_window = hann(self.segment_length)
+        self.overlap = self.segment_length // 2  # 50% overlap
+
+    def compute_spectrogram(self, signal_data):
+       
+
+        #Compute the STFT (using scipy's stft function)
+        f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
+
+        # Convert the complex STFT to magnitude for the spectrogram
+        Sxx = np.abs(Zxx)
+
+        # Store the spectrogram in the deque (limit the number of stored spectrograms)
+        #self.spectrograms.append((f, t, Sxx))
+        return ((f,t,Sxx))
+        #self.spectrograms.append(spectrogram)
 
     def get_audio_buffer_size(self):
         return self.buffer_size
@@ -100,11 +124,18 @@ class DataStreamer(threading.Thread):
                         self.chunk = self.filter_input_stream(self.chunk)
                         self.vag_cb(self.chunk)
 
-                    # send the magnitude to audio queue (this also filters like vag so is reproduced)
                     # only do this is sonfiy is selected
                     if(self.s.get_sonify_select()==1):
-                        
                         self.audio_processor.data_queue.put(self.chunk)
+
+                    # compute the spectrom gram here and add to a specific callback?
+                     #Compute the STFT (using scipy's stft function)
+                    #if len(self.vag_signal) >= self.spec_data_size:
+                        #f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
+
+                    # Convert the complex STFT to magnitude for the spectrogram
+                    #    Sxx = np.abs(Zxx)
+                    #    self.spec_cb((f, t, Sxx))
 
                     # write data to csv if logging is set
                     if(self.log == 1):

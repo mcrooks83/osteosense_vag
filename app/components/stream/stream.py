@@ -14,6 +14,7 @@ from scipy.signal import spectrogram, stft
 from scipy.signal.windows import hann
 from components.stream import level_meter as lm
 
+
 class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
@@ -79,7 +80,7 @@ class StreamFrame(Frame):
         self.mag_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
         self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size())
-        self.spectrograms = collections.deque(maxlen=10)  # Store a fixed number of spectrograms'
+        self.spectrograms = collections.deque(maxlen=20)  # Store a fixed number of spectrograms'
 
 
         # probably better in settings
@@ -144,8 +145,6 @@ class StreamFrame(Frame):
         self.data_streamer = None
         self.serial_int = None
         self.sensor_name = ""
-        
-
 
     def identify(self):
         message = f"IDENTIFY 1\n"
@@ -195,6 +194,7 @@ class StreamFrame(Frame):
         self.vag_signal.clear()
 
     def start_animation(self):
+        self.meter.start_level_meter() # starts the level meter
         if not self.ani_is_running:
             # Stop existing animation if any
             if self.ani:
@@ -205,24 +205,27 @@ class StreamFrame(Frame):
             self.ani = animation.FuncAnimation(
                 self.vag_stream,
                 self.animate,
+                cache_frame_data=False,
                 fargs=(self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data),
-                interval=10
+                #interval=10
             )
 
           
             self.ani1 = animation.FuncAnimation(
                 self.vag_sonify_stream,
                 self.animate1,
+                cache_frame_data=False,
                 fargs=( self.vag_signal, ),
-                interval=10
+                #interval=10
             )
             
             # spectogram
             self.ani2 = animation.FuncAnimation(
                self.vag_spectrum_stream,  # graph to update
                self.animate2, # function callback
+               cache_frame_data=False,
                fargs=( self.spectrograms, ),
-               interval=10
+               #interval=10
             )
 
             self.vag_sonify_stream_canvas.draw()
@@ -239,6 +242,10 @@ class StreamFrame(Frame):
 
     def stop_animation(self):
         if self.ani and self.ani_is_running:
+
+            # stop the level meter
+            self.meter.stop_level_meter()
+
             self.ani.event_source.stop()  # Stop the event source
             self.ani = None  # Clear the animation instance
 
@@ -261,8 +268,6 @@ class StreamFrame(Frame):
         #self.ax1.clear()
         message = f"START_STREAM 1\n"
         #self.serial_int.send_message(message)
-
-
         print("Starting a new thread...")
         if(self.s.get_usb_port()):
             print(f"sonify select: {self.s.get_sonify_select()}")
@@ -286,32 +291,33 @@ class StreamFrame(Frame):
            
 
     def stop_stream(self):
+        if(self.s.get_sonify_select()==1): 
+            self.audio_processor.stop()
+            self.audio_processor.join()
         message = f"STOP_STREAM 0\n"
         #self.serial_int.send_message(message)
         self.data_streamer.stop()
         self.data_streamer.join() 
 
-        if(self.s.get_sonify_select()==1): 
-            self.audio_processor.stop()
-            self.audio_processor.join()
+        
 
         self.stop_animation()
         self.reset_buffers()
         
 
     def vag_stream_callback(self, vag):
-        
         self.vag_signal.extend(vag)
         
         # compute spectogram 
         if len(self.vag_signal) >= self.spec_data_size:
-            self.compute_spectrogram()
+            signal_data = np.array(self.vag_signal)[-self.spec_data_size:]
+            spec_image = self.data_streamer.compute_spectrogram(signal_data)
+            self.spectrograms.append(spec_image)
 
+    # make a callback
     def compute_spectrogram(self):
+        print("i am called but shouldnt be")
         signal_data = np.array(self.vag_signal)[-self.spec_data_size:]
-
-        # Compute the spectrogram (using scipy's spectrogram function)
-        #, t, Sxx = spectrogram(signal_data, fs=3300, nperseg=1024)
 
         #Compute the STFT (using scipy's stft function)
         f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
@@ -321,6 +327,7 @@ class StreamFrame(Frame):
 
         # Store the spectrogram in the deque (limit the number of stored spectrograms)
         self.spectrograms.append((f, t, Sxx))
+        #self.spectrograms.append(spectrogram)
 
 
 
