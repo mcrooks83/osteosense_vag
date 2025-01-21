@@ -3,3 +3,7 @@ tk
 numpy
 matplotlib
 pandas
+numpy
+sounddevice
+pygame
+scipy
