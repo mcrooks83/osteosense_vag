@@ -309,6 +309,7 @@ class StreamFrame(Frame):
         return "No animation to stop"
     
     def start_stream(self):
+        self.start_button.config(state=DISABLED)
         
         message = f"START_STREAM 1\n"
         #self.serial_int.send_message(message)
@@ -334,6 +335,7 @@ class StreamFrame(Frame):
             res = self.start_animation()
 
     def stop_stream(self):
+        self.start_button.config(state=NORMAL)
         if(self.s.get_sonify_select()==1): 
             self.audio_processor.stop()
             self.audio_processor.join()
