@@ -14,7 +14,8 @@ from modules import audio_processor as ap
 import numpy as np
 from scipy.signal import spectrogram, stft
 from scipy.signal.windows import hann
-from components.stream import level_meter as lm
+#from components.stream import level_meter as lm
+from components.stream import dot_level_meter as lm
 import threading
 
 
@@ -93,12 +94,13 @@ class StreamFrame(Frame):
         self.im = None  # For storing the image object to update later
 
         self.meter = lm.LevelMeter(self.operations_frame)
-        self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=10, sticky="nsew")
+        self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=5, sticky="nsew")
 
         # Acceleration Graph
+        #""""
         self.vag_stream = Figure(figsize=(6, 3))
         self.ax = self.vag_stream.subplots()
-        self.ax.set_title(f"Osteosense VAG Acceleration")
+        self.ax.set_title(f"3D Raw Acceleration")
         self.ax.set_ylim(-10, 10)
         self.ax.set_xlabel("packet count", fontsize=8)
         self.ax.set_ylabel("acceleration (g)", fontsize=8)
@@ -108,7 +110,7 @@ class StreamFrame(Frame):
         
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self)
         self.vag_stream_canvas.get_tk_widget().grid(row=2, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
-
+        #"""
         # Vag signal
         self.vag_sonify_stream = Figure()
         self.ax1 = self.vag_sonify_stream.subplots()
@@ -169,8 +171,6 @@ class StreamFrame(Frame):
     # move this to serial_internface.py
     def get_usb_ports(self):
         ports = serial.tools.list_ports.comports()
-        print("Ports found:", ports)
-
         # Create a list to store all USB ports
         usb_ports = []
 
@@ -205,6 +205,7 @@ class StreamFrame(Frame):
         self.mag_data.clear()
         self.vag_signal.clear()
 
+    # this might be used if all graphs are threaded
     def start_ani(self, ax, animate_func, *args):
         """Helper function to start a FuncAnimation on a separate thread."""
         ani = animation.FuncAnimation(
@@ -235,7 +236,7 @@ class StreamFrame(Frame):
             #threading.Thread(target=self.start_ani, args=(self.vag_sonify_stream, self.animate1, self.vag_signal)).start()
             #threading.Thread(target=self.start_ani, args=(self.vag_spectrum_stream, self.animate2, self.spectrograms)).start()
            
-            
+            #"""
             self.ani = animation.FuncAnimation(
                 self.vag_stream,
                 self.animate,
@@ -244,8 +245,8 @@ class StreamFrame(Frame):
                 fargs=(self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data),
                 interval=10
             )
+            #"""
 
-          
             self.ani1 = animation.FuncAnimation(
                 self.vag_sonify_stream,
                 self.animate1,
@@ -265,6 +266,7 @@ class StreamFrame(Frame):
                interval=10
             )
 
+            # these are required for the graph to show
             self.vag_sonify_stream_canvas.draw()
             self.vag_heatmap_stream_canvas.draw()
             self.vag_stream_canvas.draw()
@@ -276,13 +278,15 @@ class StreamFrame(Frame):
             return "Animation already running"
 
     def stop_animation(self):
-        if self.ani and self.ani_is_running:
+        # ani1 is the filter vag signal and so should always be present
+        if self.ani1 and self.ani_is_running:
 
             # stop the level meter
             self.meter.stop_level_meter()
             
-            self.ani.event_source.stop()  # Stop the event source
-            self.ani = None  # Clear the animation instance
+            if(self.ani):
+                self.ani.event_source.stop()  # Stop the event source
+                self.ani = None  # Clear the animation instance
 
             # this is the vag signal 
             self.ani1.event_source.stop()  # Stop the event source
@@ -292,19 +296,20 @@ class StreamFrame(Frame):
             self.ani2.event_source.stop()  # Stop the event source
             self.ani2 = None  # Clear the animation instance
             self.ani_is_running = False
+
             return "Animation stopped"
+        
         return "No animation to stop"
     
     def start_stream(self):
         
-        #self.ax.clear()
-        #self.ax1.clear()
         message = f"START_STREAM 1\n"
         #self.serial_int.send_message(message)
         print("Starting a new thread...")
         if(self.s.get_usb_port()):
             print(f"sonify select: {self.s.get_sonify_select()}")
 
+            # create an audio processor
             self.audio_processor = ap.AudioProcessor(self.s)
 
             if(self.s.get_sonify_select()==1):    
@@ -320,8 +325,6 @@ class StreamFrame(Frame):
             self.data_streamer.start()
 
             res = self.start_animation()
-
-           
 
     def stop_stream(self):
         if(self.s.get_sonify_select()==1): 
@@ -344,7 +347,7 @@ class StreamFrame(Frame):
             spec_image = self.data_streamer.compute_spectrogram(signal_data)
             self.spectrograms.append(spec_image)
 
-    # make a callback
+    # make a callback - not used now as this is computed on a thread in data_streamer
     def compute_spectrogram(self):
         print("i am called but shouldnt be")
         signal_data = np.array(self.vag_signal)[-self.spec_data_size:]
@@ -360,7 +363,6 @@ class StreamFrame(Frame):
         #self.spectrograms.append(spectrogram)
 
 
-
     def stream_data_callback(self, acc_x, acc_y, acc_z, mag, t_index):
         self.x_data.append(acc_x)
         self.y_data.append(acc_y)
@@ -368,6 +370,7 @@ class StreamFrame(Frame):
         self.mag_data.append(mag)
         self.time_index.append(t_index)
 
+    # animate functions that may be blocking.
     def animate(self, i, tx, accel_x, accel_y, accel_z, mag):
         self.ax.clear()
         self.ax.plot(tx, accel_x, label="x accel", linewidth=1)
