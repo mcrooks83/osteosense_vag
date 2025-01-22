@@ -24,17 +24,16 @@ class StreamFrame(Frame):
         super().__init__(master, *args, **kwargs)
         self.s = s  # settings
         
-        self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
+        self.grid(row=0, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)  # Buttons row
-        self.grid_rowconfigure(1, weight=1)  # Graph row
-        self.grid_rowconfigure(2, weight=1)  # Bottom row (for split)
-        self.grid_rowconfigure(3, weight=1)  # Bottom row (for split)
 
         # Create a frame for operations and controls (buttons)
         self.operations_frame = Frame(self)
         self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.operations_frame.grid_columnconfigure(0, weight=1)
+        self.operations_frame.grid_rowconfigure(0, weight=1)
+        self.operations_frame.grid_rowconfigure(1, weight=1)
+        self.operations_frame.grid_rowconfigure(2, weight=1)  # Ensure row 2 expands
 
         # create a frame for the control buttons
         self.ctl_buttons_frame = Frame(self.operations_frame)
@@ -42,7 +41,7 @@ class StreamFrame(Frame):
 
         # Create a combobox for USB ports
         self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
-        self.usb_port_combo.grid(row=0, column=0, padx=10, pady=10)
+        self.usb_port_combo.grid(row=0, column=0, padx=10, pady=5)
         self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
 
@@ -94,50 +93,77 @@ class StreamFrame(Frame):
         self.im = None  # For storing the image object to update later
 
         self.meter = lm.LevelMeter(self.operations_frame)
-        self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=5, sticky="nsew")
+        self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=50, sticky="nsew")
 
         # Acceleration Graph
         #""""
-        self.vag_stream = Figure(figsize=(6, 3))
+        self.vag_stream = Figure(facecolor='black')
         self.ax = self.vag_stream.subplots()
-        self.ax.set_title(f"3D Raw Acceleration")
-        self.ax.set_ylim(-10, 10)
-        self.ax.set_xlabel("packet count", fontsize=8)
-        self.ax.set_ylabel("acceleration (g)", fontsize=8)
+        self.ax.set_title(f"3D Raw Acceleration",)
+        self.ax.set_ylim(-6, 6)
+        self.ax.set_facecolor("black")
+        self.ax.spines['bottom'].set_color('white')
+        self.ax.spines['left'].set_color('white')
+        self.ax.set_xlabel("packet count", fontsize=8, color="white")
+        self.ax.set_ylabel("acceleration (g)", fontsize=8, color="white")
         self.ax.xaxis.set_ticks_position('bottom')
         self.ax.yaxis.set_ticks_position('left')
-        self.ax.autoscale(True)
+        self.ax.tick_params(axis='x', colors='white')
+        self.ax.tick_params(axis='y', colors='white')
+        self.ax.autoscale(False)
         
-        self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self)
-        self.vag_stream_canvas.get_tk_widget().grid(row=2, column=0, columnspan=2, sticky='nsew', padx=5, pady=5)
         #"""
         # Vag signal
-        self.vag_sonify_stream = Figure()
+        self.vag_sonify_stream = Figure(facecolor='black')
         self.ax1 = self.vag_sonify_stream.subplots()
-        self.ax1.set_title(f"VAG Signal")
+        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz")
         self.ax1.set_ylim(-2, 2)
         self.ax1.set_xlabel("packet count", fontsize=8)
-        self.ax1.set_ylabel("", fontsize=8)
+        self.ax1.set_ylabel("(g)", fontsize=8)
         self.ax1.xaxis.set_ticks_position('bottom')
         self.ax1.yaxis.set_ticks_position('left')
         self.ax1.autoscale(True)
+        self.ax1.set_facecolor("black")
+        self.ax1.spines['bottom'].set_color('white')
+        self.ax1.spines['left'].set_color('white')
+        self.ax1.set_xlabel("packet count", fontsize=8, color="white")
+        self.ax1.set_ylabel("acceleration (g)", fontsize=8, color="white")
+        self.ax1.xaxis.set_ticks_position('bottom')
+        self.ax1.yaxis.set_ticks_position('left')
+        self.ax1.tick_params(axis='x', colors='white')
+        self.ax1.tick_params(axis='y', colors='white')
 
         # power spectrum
-        self.vag_spectrum_stream = Figure()
+        self.vag_spectrum_stream = Figure(facecolor='black')
         self.ax2 = self.vag_spectrum_stream.subplots()
         self.ax2.set_title(f"VAG Spectrum")
+        self.ax2.set_xlabel("t", fontsize=8)
+        self.ax2.set_ylabel("Sxx", fontsize=8)
+        self.ax2.set_facecolor("black")
+        self.ax2.spines['bottom'].set_color('white')
+        self.ax2.spines['left'].set_color('white')
+        self.ax2.set_xlabel("packet count", fontsize=8, color="white")
+        self.ax2.set_ylabel("acceleration (g)", fontsize=8, color="white")
+        self.ax2.xaxis.set_ticks_position('bottom')
+        self.ax2.yaxis.set_ticks_position('left')
+        self.ax2.tick_params(axis='x', colors='white')
+        self.ax2.tick_params(axis='y', colors='white')
 
-        # Bottom section split in two
-        self.output_frame = Frame(self)
+        # graph frame
+        self.output_frame = Frame(self.operations_frame, bg="black")
         self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
         self.output_frame.grid_columnconfigure(0, weight=1)
         self.output_frame.grid_columnconfigure(1, weight=1)
+        self.output_frame.grid_columnconfigure(2, weight=1)
+
+        self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self.output_frame)
+        self.vag_stream_canvas.get_tk_widget().grid(row=0, column=0,  sticky='nesw', padx=5, pady=5)
 
         self.vag_sonify_stream_canvas = FigureCanvasTkAgg(self.vag_sonify_stream, master=self.output_frame)
-        self.vag_sonify_stream_canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+        self.vag_sonify_stream_canvas.get_tk_widget().grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
 
         self.vag_heatmap_stream_canvas = FigureCanvasTkAgg(self.vag_spectrum_stream, master=self.output_frame)
-        self.vag_heatmap_stream_canvas.get_tk_widget().grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
+        self.vag_heatmap_stream_canvas.get_tk_widget().grid(row=0, column=2, sticky='nsew', padx=5, pady=5)
 
         self.ani_is_running = False
         self.ani = None
