@@ -169,10 +169,23 @@ class StreamFrame(Frame):
     # move this to serial_internface.py
     def get_usb_ports(self):
         ports = serial.tools.list_ports.comports()
-        usb_ports = [port.device for port in ports if 'ACM' in port.device]
-        self.usb_port_combo['values'] = usb_ports
-        #for port in ports:
-        #    self.usb_port_combo['values'] = (*self.usb_port_combo['values'], port.device)
+        print("Ports found:", ports)
+
+        # Create a list to store all USB ports
+        usb_ports = []
+
+        # Cross-platform port detection
+        for port in ports:
+            # Append Linux ACM ports and all ports for Windows/others
+            if 'ACM' in port.device or any(platform_key in port.description.lower() for platform_key in ['usb', 'serial']):
+                usb_ports.append(port.device)
+
+        # Remove duplicates and update the combo box
+        self.usb_port_combo['values'] = list(set(usb_ports))
+
+        # Debug output for verification
+        print("USB ports added to combo box:", self.usb_port_combo['values'])
+            
 
     def on_usb_port_combo_select(self, event):
         selected_usb_port = self.usb_port_combo.get()
