@@ -27,7 +27,7 @@ class Settings:
         self.log = 0
 
         # filter settings 
-        self.sampling_rate = 3300 # 3.3Khz
+        self.sampling_rate = 3000 # 3Khz
         self.filter_type = "bandpass" # high
 
         # these could be settable in the UI

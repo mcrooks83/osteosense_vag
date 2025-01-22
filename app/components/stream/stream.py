@@ -205,20 +205,6 @@ class StreamFrame(Frame):
         self.mag_data.clear()
         self.vag_signal.clear()
 
-    # this might be used if all graphs are threaded
-    def start_ani(self, ax, animate_func, *args):
-        """Helper function to start a FuncAnimation on a separate thread."""
-        ani = animation.FuncAnimation(
-            ax,
-            animate_func,
-            cache_frame_data=False,
-            fargs=args,
-            interval=10
-        )
-
-        ax.figure.canvas.draw()
-        return ani
-
     def start_animation(self):
         self.meter.start_level_meter() # starts the level meter
         if not self.ani_is_running:
@@ -227,25 +213,17 @@ class StreamFrame(Frame):
                 self.stop_animation()
 
             print("starting a new animation")
-
-            # possible performance improvement -> run each graph in a thead.
-            #threading.Thread(target=self.start_ani, 
-            #    args=(self.vag_stream, self.animate, self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data)).start()
-
-            #threading.Thread(target=self.start_ani, args=(self.vag_stream, self.animate, self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data)).start()
-            #threading.Thread(target=self.start_ani, args=(self.vag_sonify_stream, self.animate1, self.vag_signal)).start()
-            #threading.Thread(target=self.start_ani, args=(self.vag_spectrum_stream, self.animate2, self.spectrograms)).start()
-           
-            #"""
+            
             self.ani = animation.FuncAnimation(
                 self.vag_stream,
                 self.animate,
                 cache_frame_data=True,
                 save_count = 10,
                 fargs=(self.time_index, self.x_data, self.y_data, self.z_data, self.mag_data),
-                interval=10
+                interval=10,
+                blit=False, # Turning on Blit
             )
-            #"""
+            
 
             self.ani1 = animation.FuncAnimation(
                 self.vag_sonify_stream,
@@ -253,7 +231,8 @@ class StreamFrame(Frame):
                 cache_frame_data=True,
                 save_count = 10,
                 fargs=( self.vag_signal, ),
-                interval=10
+                interval=10,
+                blit=False, # Turning on Blit
             )
             
             # spectogram
@@ -263,13 +242,15 @@ class StreamFrame(Frame):
                cache_frame_data=True,
                save_count = 10,
                fargs=( self.spectrograms, ),
-               interval=10
+               interval=10,
+               blit=False, # Turning on Blit
             )
 
             # these are required for the graph to show
             self.vag_sonify_stream_canvas.draw()
             self.vag_heatmap_stream_canvas.draw()
             self.vag_stream_canvas.draw()
+            
             
             self.ani_is_running = True
 
@@ -380,7 +361,7 @@ class StreamFrame(Frame):
         self.ax.legend()
         self.ax.grid(True)
         self.ax.set_ylim(-10, 10)
-    
+
     def animate1(self, i,  vag):
         self.ax1.clear()
         self.ax1.plot(vag, label="vag signal", linewidth=1)
