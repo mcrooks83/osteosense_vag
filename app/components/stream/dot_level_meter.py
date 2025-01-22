@@ -8,6 +8,7 @@ class LevelMeter(tk.Frame):
         super().__init__(parent)
         
         pygame.mixer.init()
+        self.configure(bg="black")
 
         self.dot_fill_time = dot_fill_time  # Time to fill each dot (ms)
         self.click_interval = click_interval  # Time interval for click sound (ms)
@@ -17,7 +18,7 @@ class LevelMeter(tk.Frame):
         self.filling_phase = True  # Flag to track if we're filling or clearing the dots
         self.timer_interval = dot_fill_time  # ms
 
-        self.canvas = tk.Canvas(self, height=40, highlightthickness=0)
+        self.canvas = tk.Canvas(self, height=40, highlightthickness=0,bg="black")
         self.canvas.pack()
 
         self.update_flag = False
@@ -97,7 +98,7 @@ class LevelMeter(tk.Frame):
 
         # Draw the dots
         for i in range(self.num_dots):
-            color = "green" if i < self.current_dot else "lightgrey"
+            color = "#616CAB" if i < self.current_dot else "white"
             x = start_x + i * (dot_diameter * 4)  # Position each dot
             self.canvas.create_oval(x, 10, x + dot_diameter, 10 + dot_diameter, fill=color)
 

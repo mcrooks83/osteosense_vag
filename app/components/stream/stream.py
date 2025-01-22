@@ -1,5 +1,5 @@
 from tkinter import  Frame,Label, Button, NORMAL, DISABLED, IntVar, Checkbutton
-from tkinter.ttk import Combobox
+from tkinter.ttk import Combobox, Style
 import matplotlib
 from matplotlib.pyplot import Figure
 import matplotlib.animation as animation
@@ -23,12 +23,12 @@ class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.s = s  # settings
-        
+        self.configure(bg="black")
         self.grid(row=0, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
         self.grid_columnconfigure(0, weight=1)
 
         # Create a frame for operations and controls (buttons)
-        self.operations_frame = Frame(self)
+        self.operations_frame = Frame(self, bg="black")
         self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.operations_frame.grid_columnconfigure(0, weight=1)
         self.operations_frame.grid_rowconfigure(0, weight=1)
@@ -36,11 +36,26 @@ class StreamFrame(Frame):
         self.operations_frame.grid_rowconfigure(2, weight=1)  # Ensure row 2 expands
 
         # create a frame for the control buttons
-        self.ctl_buttons_frame = Frame(self.operations_frame)
+        self.ctl_buttons_frame = Frame(self.operations_frame, bg="black")
         self.ctl_buttons_frame.grid(row=0, column=0, sticky="w")
 
         # Create a combobox for USB ports
-        self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
+        # Create a style for the Combobox
+        style = Style()
+        style.configure("TCombobox", 
+                        fieldbackground="white",  # Background of the text field
+                        background="white",       # Dropdown background
+                        foreground="white",
+                        font=("Montserrat", 12, "bold")
+                        )
+        style.configure("TCombobox.Listbox",
+                background="white",       # Background of the dropdown list
+                foreground="#616CAB",       # Text color of list items
+                font=("Montserrat", 12, "bold")
+                )
+
+        self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[], style="TCombobox")
+        #self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
         self.usb_port_combo.grid(row=0, column=0, padx=10, pady=5)
         self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
@@ -56,21 +71,48 @@ class StreamFrame(Frame):
         #self.log_rb.grid(row=0, column=2, pady=5, sticky="w")
 
         # Start and Stop buttons
-        self.poll_device = Button(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports())
-        self.poll_device.grid(row=0, column=3, padx=5, pady=5, sticky="w")
-        self.poll_device.configure(bg="red", fg="white")
+        self.poll_device = Button(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports(),
+            borderwidth=0,             # Removes the border
+            highlightthickness=0,      # Removes the highlight border  
+            font=("Montserrat", 12, "bold")  # Bold font 
+        )
+        self.poll_device.grid(row=0, column=3, padx=5,  sticky="w")
+        self.poll_device.configure(bg="#1BD3EA", fg="white")
 
-        self.start_button = Button(self.ctl_buttons_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream())
-        self.start_button.grid(row=0, column=4, padx=5, pady=5, sticky="w")
-        self.start_button.configure(bg="blue", fg="white")
+        self.start_button = Button(self.ctl_buttons_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream(),
+            borderwidth=0,             # Removes the border
+            highlightthickness=0,      # Removes the highlight border  
+            font=("Montserrat", 12, "bold")  # Bold font 
+        )
+        self.start_button.grid(row=0, column=4, padx=10, pady=5, sticky="w")
+        self.start_button.configure(bg="#616CAB", fg="white")
 
-        self.stop_button = Button(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream())
-        self.stop_button.grid(row=0, column=5, padx=5, pady=5, sticky="w")
-        self.stop_button.configure(bg="orange", fg="white")
+        self.stop_button = Button(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream(), 
+            borderwidth=0,             # Removes the border
+            highlightthickness=0,      # Removes the highlight border  
+            font=("Montserrat", 12, "bold")  # Bold font 
+        )
+        self.stop_button.grid(row=0, column=5, padx=10, pady=5, sticky="w")
+        self.stop_button.configure(bg="#F3F2F7", fg="#5A72ED")
 
          # starts on and if it is off there is no audio processed
-        self.sonify_rb = Checkbutton(self.ctl_buttons_frame, text="sonify", onvalue=1, offvalue=0, variable=self.sonify_var, command=self.set_sonify)
-        self.sonify_rb.grid(row=0, column=6, pady=5, sticky="w")
+        self.sonify_rb = Checkbutton(
+            self.ctl_buttons_frame, 
+            borderwidth=0,             # Removes the border
+            highlightthickness=0,      # Removes the highlight border
+            text="sonify", 
+            bg="black", 
+            fg="white",          # Text color
+            font=("Montserrat", 12, "bold"),  # Bold font 
+            activebackground="black",  # Prevents gray background on hover
+            activeforeground="white",  # Keeps text white on hover
+            selectcolor="#616CAB",  # Checkbox background color when selected
+            onvalue=1, 
+            offvalue=0, 
+            variable=self.sonify_var, 
+            command=self.set_sonify
+        )
+        self.sonify_rb.grid(row=0, column=6, padx=10, pady=5, sticky="w")
 
         #self.identify_button = Button(self.operations_frame, text="Identify", command=lambda: self.identify())
         #self.identify_button.grid(row=0, column=6, padx=5, pady=5, sticky="w")
@@ -104,13 +146,14 @@ class StreamFrame(Frame):
         self.ax.set_facecolor("black")
         self.ax.spines['bottom'].set_color('white')
         self.ax.spines['left'].set_color('white')
-        self.ax.set_xlabel("packet count", fontsize=8, color="white")
-        self.ax.set_ylabel("acceleration (g)", fontsize=8, color="white")
+        self.ax.set_xlabel("packet count", fontsize=10, color="white")
+        self.ax.set_ylabel("acceleration (g)", fontsize=10, color="white")
         self.ax.xaxis.set_ticks_position('bottom')
         self.ax.yaxis.set_ticks_position('left')
         self.ax.tick_params(axis='x', colors='white')
         self.ax.tick_params(axis='y', colors='white')
         self.ax.autoscale(False)
+        self.ax.grid(False)
         
         #"""
         # Vag signal
@@ -118,32 +161,27 @@ class StreamFrame(Frame):
         self.ax1 = self.vag_sonify_stream.subplots()
         self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz")
         self.ax1.set_ylim(-2, 2)
-        self.ax1.set_xlabel("packet count", fontsize=8)
-        self.ax1.set_ylabel("(g)", fontsize=8)
-        self.ax1.xaxis.set_ticks_position('bottom')
-        self.ax1.yaxis.set_ticks_position('left')
         self.ax1.autoscale(True)
         self.ax1.set_facecolor("black")
         self.ax1.spines['bottom'].set_color('white')
         self.ax1.spines['left'].set_color('white')
-        self.ax1.set_xlabel("packet count", fontsize=8, color="white")
-        self.ax1.set_ylabel("acceleration (g)", fontsize=8, color="white")
+        self.ax1.set_xlabel("packet count", fontsize=10, color="white")
+        self.ax1.set_ylabel("acceleration (g)", fontsize=10, color="white")
         self.ax1.xaxis.set_ticks_position('bottom')
         self.ax1.yaxis.set_ticks_position('left')
         self.ax1.tick_params(axis='x', colors='white')
         self.ax1.tick_params(axis='y', colors='white')
+        self.ax1.grid(False)
 
         # power spectrum
         self.vag_spectrum_stream = Figure(facecolor='black')
         self.ax2 = self.vag_spectrum_stream.subplots()
         self.ax2.set_title(f"VAG Spectrum")
-        self.ax2.set_xlabel("t", fontsize=8)
-        self.ax2.set_ylabel("Sxx", fontsize=8)
         self.ax2.set_facecolor("black")
         self.ax2.spines['bottom'].set_color('white')
         self.ax2.spines['left'].set_color('white')
-        self.ax2.set_xlabel("packet count", fontsize=8, color="white")
-        self.ax2.set_ylabel("acceleration (g)", fontsize=8, color="white")
+        self.ax2.set_xlabel("time", fontsize=10, color="white")
+        self.ax2.set_ylabel("PSD", fontsize=10, color="white")
         self.ax2.xaxis.set_ticks_position('bottom')
         self.ax2.yaxis.set_ticks_position('left')
         self.ax2.tick_params(axis='x', colors='white')
@@ -382,19 +420,19 @@ class StreamFrame(Frame):
     # animate functions that may be blocking.
     def animate(self, i, tx, accel_x, accel_y, accel_z, mag):
         self.ax.clear()
-        self.ax.plot(tx, accel_x, label="x accel", linewidth=1)
-        self.ax.plot(tx, accel_y, label="y accel", linewidth=1)
-        self.ax.plot(tx, accel_z, label="z accel", linewidth=1)
-        self.ax.plot(tx, mag, label="mag", linewidth=1)
+        self.ax.plot(tx, accel_x, label="x accel", linewidth=1, color="#1C1F33")
+        self.ax.plot(tx, accel_y, label="y accel", linewidth=1, color="#1BD3EA")
+        self.ax.plot(tx, accel_z, label="z accel", linewidth=1, color="#616CAB")
+        self.ax.plot(tx, mag, label="mag", linewidth=1, color="red")
         self.ax.legend()
-        self.ax.grid(True)
+        #elf.ax.grid(False)
         self.ax.set_ylim(-10, 10)
 
     def animate1(self, i,  vag):
         self.ax1.clear()
-        self.ax1.plot(vag, label="vag signal", linewidth=1)
+        self.ax1.plot(vag, label="vag signal", linewidth=1, color="#1BD3EA")
         self.ax1.legend()
-        self.ax1.grid(True)
+        #elf.ax1.grid(False)
         self.ax1.set_ylim(-4, 4)
     
     def animate2(self, i,  spectrograms):

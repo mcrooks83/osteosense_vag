@@ -20,12 +20,13 @@ class MainApplication(Tk):
         self.width = Tk.winfo_screenwidth(self)
         self.height = Tk.winfo_screenheight(self)
         self.geometry(f"{self.width}x{self.height}")
-        self.title("Powered by Right Step Health & TalTech")
-
+        self.title("A Right Step Health & TalTech Collaboration")
+        
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
+        self.configure(bg="black")
         self.canvas = c.Canvas(self, settings)
-        self.title_label = t.Title(self, text="OSTEOSENSE VIBROARTHOGRAPHY")
+        self.title_label = t.Title(self, text="OSTEOSENSE VIBROSONIX")
 
         # create an exports directory if it doesnt exist
 
