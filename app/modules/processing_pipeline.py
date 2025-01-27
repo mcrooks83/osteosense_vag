@@ -7,6 +7,7 @@ from scipy.signal import medfilt, butter, filtfilt, lfilter
 from scipy.signal import welch,  get_window, stft
 import math
 import sys
+from scipy.stats import linregress
 
 def read_file(path):
     df = pd.read_csv(path)
@@ -116,7 +117,6 @@ def compute_spectogram(data, filter_settings, spectogram_settings):
     return f, t, Sxx
 
 def compute_freq_band_spectogram_from_stft(data, filter_settings, spectogram_settings, band):
-    print(band)
     b,a = build_filter((filter_settings["low_cut_off"], filter_settings["high_cut_off"]), 
                         filter_settings["sampling_rate"], 
                         filter_settings["filter_type"], 
@@ -136,3 +136,66 @@ def compute_freq_band_spectogram_from_stft(data, filter_settings, spectogram_set
     Zxx_dB_filtered = p_Zxx[freq_mask, :]  # Apply mask to spectrogram data
 
     return frequencies_filtered, t, Zxx_dB_filtered
+
+
+### compute the fractal dimension of the recording
+# the only way this comes out is if the slope is made a positive value if negative
+def apply_hanning(d):
+    hanning_window = np.hanning(len(d))
+    windowed_signal = d * hanning_window
+    return windowed_signal
+
+def amplitude_normal(signal):
+    sig = np.array(signal)
+    data_min = min(sig)
+    data_max = max(sig)
+    normal = (sig - data_min) / (data_max - data_min)
+    return normal.tolist()
+
+def compute_fd(slope):
+    fd = (5 - abs(slope)) / 2
+    return fd
+
+def compute_fd_from_signal(s, fs, min_f, max_f):
+    # apply hanning window
+    hann = apply_hanning(s)
+    dft_result = np.fft.fft(hann)
+
+    # psd
+    x_f = np.fft.fftfreq(len(hann), d=1/fs)
+    psd = np.abs(dft_result) ** 2
+    mask = x_f > 0
+    #postive side of FFT / PSD
+    pos_f = x_f[mask]
+    pos_psd = psd[mask]  # Filter PSD using the same mask
+
+    # log log
+    log_f = np.log(pos_f)
+    log_psd = np.log(pos_psd)
+
+    # slope and best fit
+    indices = np.where((pos_f >= min_f) & (pos_f <= max_f))[0]
+
+    x = log_f[indices]
+    y = log_psd[indices]
+    m, b, r_value, p_value, std_err = linregress(x, y)
+
+    #fractal dimension
+    fd_n = compute_fd(m)
+    return fd_n
+
+### data must be normalised and filtered prior
+### fd is computed from the magnitude
+def compute_fractal_dimension(magnitdue, filter_settings):
+    b,a = build_filter((filter_settings["low_cut_off"], filter_settings["high_cut_off"]), 
+                        filter_settings["sampling_rate"], 
+                        filter_settings["filter_type"], 
+                        filter_settings["filter_order"])
+
+    f_a_mag = filter_signal(b,a, magnitdue, "filtfilt")
+    mag_norm = amplitude_normal(f_a_mag)
+
+    fd = compute_fd_from_signal(mag_norm, filter_settings["sampling_rate"], filter_settings["low_cut_off"], filter_settings["high_cut_off"])
+    print(fd)
+    return fd
+

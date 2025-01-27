@@ -96,7 +96,11 @@ class AnalyseFrame(Frame):
         self.output_frame = Frame(self, bg="black")
         self.output_frame.grid(row=1, column=0,  sticky="nsew", padx=5, pady=5)
         self.output_frame.grid_columnconfigure(0, weight=1)
-        self.output_frame.grid_rowconfigure(0, weight=1)
+        self.output_frame.grid_rowconfigure(1, weight=1)
+
+        # fd label
+        self.fd_label = Label(self.output_frame, bg="black", fg="white", text="", font=("Montserrat", 20))
+        self.fd_label.grid(row=0, column=0, sticky='w', padx=5, pady=5)
 
         # figures
         self.fig = Figure(facecolor='black')
@@ -105,7 +109,7 @@ class AnalyseFrame(Frame):
 
         # Configure first subplot (Frequency Band Power Contribution)
         self.f_ax.set_title("Frequency Band Power Contribution", color="white")
-        self.f_ax.set_ylim(0, 100)
+        #self.f_ax.set_ylim(0, 100)
         self.f_ax.set_xlabel("frequency bands", fontsize=8, color="white")
         self.f_ax.set_ylabel("% power [a*2/Hz]", fontsize=8, color="white")
         self.f_ax.xaxis.set_ticks_position('bottom')
@@ -132,13 +136,10 @@ class AnalyseFrame(Frame):
 
         # Add the figure to the Tkinter canvas
         self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.output_frame)
-        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+        self.fig_canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5, pady=5)
 
         self.spectrogram_cb = None
 
-
-
-        #self.read_and_process_test_file()
     def read_device_data(self):
         #check there is a mount path first
         self.data_reader.poll_and_convert()
@@ -204,7 +205,7 @@ class AnalyseFrame(Frame):
     """
 
     def plot_f_bands(self, intervals, f_percentages):
-        self.f_ax.clear()
+        #self.f_ax.clear()
         bars = self.f_ax.bar(intervals, f_percentages, color="c")
         self.f_ax.tick_params(axis='x', labelrotation=90, labelsize=6)
 
@@ -253,5 +254,8 @@ class AnalyseFrame(Frame):
         #f_band2, times_band2, Zxx_band2 = pp.compute_freq_band_spectogram_from_stft(a_mag, bp_filter_settings, spectogram_settings, self.s.get_f_band2())
         self.plot_f_bands(intervals, f_percentages)
         self.plot_spectrogram(frequencies, times, Sxx)
+
+        fd = pp.compute_fractal_dimension(a_mag, bp_filter_settings)
+        self.fd_label.config(text=f"Fractal Dimension: {round(fd, 2)}")
         #self.plot_f_band1_spectogram(f_band1, times_band1, Zxx_band1)
         #self.plot_f_band2_spectogram(f_band2, times_band2, Zxx_band2)
