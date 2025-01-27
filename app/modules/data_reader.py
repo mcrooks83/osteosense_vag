@@ -39,6 +39,7 @@ class DataReader():
             devices = self.get_usb_mount_points()
         return devices
 
+    # this is used to read the data directly off the device (i.e its in logging mode )
     def poll_and_convert(self):
         try:
             # poll the mount_point until it is ready
@@ -64,6 +65,8 @@ class DataReader():
         except Exception as e:
             print(f"Error: {e}")   
     
+    # this should be the primary function to read in a csv 
+    # triggered by either clicking analyse from the stream screen or by selecting a new file 
     def load_csv(self):
         df = pd.read_csv(self.path_to_csv)
         print(df.head(5))

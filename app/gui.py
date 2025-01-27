@@ -17,9 +17,10 @@ class MainApplication(Tk):
         settings = s.Settings()
 
         # screen setup
-        self.width = Tk.winfo_screenwidth(self)
-        self.height = Tk.winfo_screenheight(self)
-        self.geometry(f"{self.width}x{self.height}")
+        #self.width = Tk.winfo_screenwidth(self)
+        #self.height = Tk.winfo_screenheight(self)
+        #self.geometry(f"{self.width}x{self.height}")
+        self.state("zoomed")
         self.title("A Right Step Health & TalTech Collaboration")
         
         self.grid_columnconfigure(0, weight=1)

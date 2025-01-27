@@ -1,43 +1,36 @@
-from tkinter import  Frame,Label, Button, NORMAL, DISABLED, IntVar, Checkbutton
+from tkinter import  Frame, Button, NORMAL, DISABLED, IntVar, Checkbutton
 from tkinter.ttk import Combobox, Style
-import matplotlib
 from matplotlib.pyplot import Figure
 import matplotlib.animation as animation
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,NavigationToolbar2Tk)
-from matplotlib import style
-
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
 import collections
 from modules import data_streamer as ds
 from modules import serial_interface as si # serial port operations including sending messages to the device
 import serial.tools.list_ports
 from modules import audio_processor as ap
 import numpy as np
-from scipy.signal import spectrogram, stft
+from scipy.signal import  stft
 from scipy.signal.windows import hann
-#from components.stream import level_meter as lm
 from components.stream import dot_level_meter as lm
-import threading
-
 
 class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.s = s  # settings
         self.configure(bg="black")
-        self.grid(row=0, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
+        self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
         self.grid_columnconfigure(0, weight=1)
 
         # Create a frame for operations and controls (buttons)
         self.operations_frame = Frame(self, bg="black")
         self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.operations_frame.grid_columnconfigure(0, weight=1)
-        self.operations_frame.grid_rowconfigure(0, weight=1)
-        self.operations_frame.grid_rowconfigure(1, weight=1)
-        self.operations_frame.grid_rowconfigure(2, weight=1)  # Ensure row 2 expands
+        self.operations_frame.grid_rowconfigure(0, weight=1) # operations frame
+        self.operations_frame.grid_rowconfigure(1, weight=1) # output frame
 
         # create a frame for the control buttons
         self.ctl_buttons_frame = Frame(self.operations_frame, bg="black")
-        self.ctl_buttons_frame.grid(row=0, column=0, sticky="w")
+        self.ctl_buttons_frame.grid(row=0, column=0, sticky="ew")
 
         # Create a combobox for USB ports
         # Create a style for the Combobox
@@ -56,19 +49,12 @@ class StreamFrame(Frame):
 
         self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[], style="TCombobox")
         #self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
-        self.usb_port_combo.grid(row=0, column=0, padx=10, pady=5)
+        self.usb_port_combo.grid(row=0, column=0, padx=5, pady=5)
         self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
 
         #self.sensor_name_label = Label(self.operations_frame, text="")
         #self.sensor_name_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
-
-        self.log_var = IntVar()
-        self.sonify_var = IntVar(value=1)
-
-        # this will be used to record - it should record the VAG signal rather than the raw data set    
-        #self.log_rb = Checkbutton(self.operations_frame, text="log", onvalue=1, offvalue=0, variable=self.log_var, command=self.set_log)
-        #self.log_rb.grid(row=0, column=2, pady=5, sticky="w")
 
         # Start and Stop buttons
         self.poll_device = Button(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports(),
@@ -84,7 +70,7 @@ class StreamFrame(Frame):
             highlightthickness=0,      # Removes the highlight border  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
-        self.start_button.grid(row=0, column=4, padx=10, pady=5, sticky="w")
+        self.start_button.grid(row=0, column=4, padx=10, pady=5, sticky="e")
         self.start_button.configure(bg="#616CAB", fg="white")
 
         self.stop_button = Button(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream(), 
@@ -92,8 +78,10 @@ class StreamFrame(Frame):
             highlightthickness=0,      # Removes the highlight border  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
-        self.stop_button.grid(row=0, column=5, padx=10, pady=5, sticky="w")
+        self.stop_button.grid(row=0, column=5, padx=10, pady=5, sticky="e")
         self.stop_button.configure(bg="#F3F2F7", fg="#5A72ED")
+
+        self.sonify_var = IntVar(value=1)
 
          # starts on and if it is off there is no audio processed
         self.sonify_rb = Checkbutton(
@@ -112,7 +100,23 @@ class StreamFrame(Frame):
             variable=self.sonify_var, 
             command=self.set_sonify
         )
-        self.sonify_rb.grid(row=0, column=6, padx=10, pady=5, sticky="w")
+        self.sonify_rb.grid(row=0, column=6, padx=10, pady=5, sticky="e")
+
+        self.record_var = IntVar()
+        
+        # this will be used to record - it should record the VAG signal rather than the raw data set    
+        self.record_cb = Checkbutton(self.ctl_buttons_frame, 
+                                   borderwidth=0,             # Removes the border
+            highlightthickness=0,      # Removes the highlight border
+            text="record", 
+            bg="black", 
+            fg="white",          # Text color
+            font=("Montserrat", 12, "bold"),  # Bold font 
+            activebackground="black",  # Prevents gray background on hover
+            activeforeground="white",  # Keeps text white on hover
+            selectcolor="#616CAB",  # Checkbox background color when selected
+            onvalue=1, offvalue=0, variable=self.record_var, command=self.set_record)
+        self.record_cb.grid(row=0, column=7, padx=10, pady=5, sticky="e")
 
         #self.identify_button = Button(self.operations_frame, text="Identify", command=lambda: self.identify())
         #self.identify_button.grid(row=0, column=6, padx=5, pady=5, sticky="w")
@@ -137,11 +141,31 @@ class StreamFrame(Frame):
         self.meter = lm.LevelMeter(self.operations_frame)
         self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=50, sticky="nsew")
 
+        self.output_frame = Frame(self, bg="black")
+        self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
+        self.output_frame.grid_columnconfigure(0, weight=1)
+
+        # figures
+        self.fig = Figure(facecolor='black')
+        self.ax, self.ax1, self.ax2 = self.fig.subplots(nrows=1, ncols=3)
+        self.fig.subplots_adjust(wspace=0.5)  # Increase this value for more space
+
+        """
+            code to rearrange the figures 
+
+            gs = self.fig.add_gridspec(nrows=2, ncols=2, height_ratios=[1, 1])  # Define grid with 2 rows, 2 columns
+
+            # Top row: A single subplot spanning both columns
+            self.top_ax = self.fig.add_subplot(gs[0, :])  # Span across both columns
+
+            # Bottom row: Two separate subplots
+            self.bottom_left_ax = self.fig.add_subplot(gs[1, 0])
+            self.bottom_right_ax = self.fig.add_subplot(gs[1, 1])
+        """
+
         # Acceleration Graph
         #""""
-        self.vag_stream = Figure(facecolor='black')
-        self.ax = self.vag_stream.subplots()
-        self.ax.set_title(f"3D Raw Acceleration",)
+        self.ax.set_title(f"3D Raw Acceleration", color="white")
         self.ax.set_ylim(-6, 6)
         self.ax.set_facecolor("black")
         self.ax.spines['bottom'].set_color('white')
@@ -157,8 +181,6 @@ class StreamFrame(Frame):
         
         #"""
         # Vag signal
-        self.vag_sonify_stream = Figure(facecolor='black')
-        self.ax1 = self.vag_sonify_stream.subplots()
         self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz")
         self.ax1.set_ylim(-2, 2)
         self.ax1.autoscale(True)
@@ -174,8 +196,6 @@ class StreamFrame(Frame):
         self.ax1.grid(False)
 
         # power spectrum
-        self.vag_spectrum_stream = Figure(facecolor='black')
-        self.ax2 = self.vag_spectrum_stream.subplots()
         self.ax2.set_title(f"VAG Spectrum")
         self.ax2.set_facecolor("black")
         self.ax2.spines['bottom'].set_color('white')
@@ -187,13 +207,10 @@ class StreamFrame(Frame):
         self.ax2.tick_params(axis='x', colors='white')
         self.ax2.tick_params(axis='y', colors='white')
 
-        # graph frame
-        self.output_frame = Frame(self.operations_frame, bg="black")
-        self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
-        self.output_frame.grid_columnconfigure(0, weight=1)
-        self.output_frame.grid_columnconfigure(1, weight=1)
-        self.output_frame.grid_columnconfigure(2, weight=1)
+        self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.output_frame)
+        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
 
+        """
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self.output_frame)
         self.vag_stream_canvas.get_tk_widget().grid(row=0, column=0,  sticky='nesw', padx=5, pady=5)
 
@@ -202,6 +219,7 @@ class StreamFrame(Frame):
 
         self.vag_heatmap_stream_canvas = FigureCanvasTkAgg(self.vag_spectrum_stream, master=self.output_frame)
         self.vag_heatmap_stream_canvas.get_tk_widget().grid(row=0, column=2, sticky='nsew', padx=5, pady=5)
+        """
 
         self.ani_is_running = False
         self.ani = None
@@ -215,14 +233,14 @@ class StreamFrame(Frame):
         message = f"IDENTIFY 1\n"
         #self.serial_int.send_message(message)
 
-    def set_log(self):
-        if(self.log_var.get() == 0):
+    def set_record(self):
+        if(self.record_var.get() == 0):
             print("setting to not log data")
-            self.s.set_log(0)
+            self.s.set_record(0) # on settings class
            
-        elif(self.log_var.get() == 1):
+        elif(self.record_var.get() == 1):
             print("setting to log data")
-            self.s.set_log(1)
+            self.s.set_record(1)
 
     def set_sonify(self):
         if(self.sonify_var.get() == 0):
@@ -250,7 +268,6 @@ class StreamFrame(Frame):
         # Debug output for verification
         print("USB ports added to combo box:", self.usb_port_combo['values'])
             
-
     def on_usb_port_combo_select(self, event):
         selected_usb_port = self.usb_port_combo.get()
         self.s.set_usb_port(selected_usb_port)
@@ -275,11 +292,9 @@ class StreamFrame(Frame):
             # Stop existing animation if any
             if self.ani:
                 self.stop_animation()
-
-            print("starting a new animation")
             
             self.ani = animation.FuncAnimation(
-                self.vag_stream,
+                self.fig,
                 self.animate,
                 cache_frame_data=True,
                 save_count = 10,
@@ -288,9 +303,8 @@ class StreamFrame(Frame):
                 blit=False, # Turning on Blit
             )
             
-
             self.ani1 = animation.FuncAnimation(
-                self.vag_sonify_stream,
+                self.fig,
                 self.animate1,
                 cache_frame_data=True,
                 save_count = 10,
@@ -301,7 +315,7 @@ class StreamFrame(Frame):
             
             # spectogram
             self.ani2 = animation.FuncAnimation(
-               self.vag_spectrum_stream,  # graph to update
+               self.fig,  # graph to update
                self.animate2, # function callback
                cache_frame_data=True,
                save_count = 10,
@@ -310,11 +324,7 @@ class StreamFrame(Frame):
                blit=False, # Turning on Blit
             )
 
-            # these are required for the graph to show
-            self.vag_sonify_stream_canvas.draw()
-            self.vag_heatmap_stream_canvas.draw()
-            self.vag_stream_canvas.draw()
-            
+            self.fig_canvas.draw()
             
             self.ani_is_running = True
 
@@ -368,7 +378,17 @@ class StreamFrame(Frame):
                                                 self.stream_data_callback, self.vag_stream_callback,
                                                 self.serial_int.get_serial(),
                                                   self.s.get_sonify_select(), self.audio_processor)
-            self.data_streamer.start()
+            
+            # if the record flag is set then create a file and then start streaming
+            # what happens if the file fails to create..do we stream still or alert user?
+            if(self.s.get_record() == 1):
+                file_created = self.data_streamer.create_record_file()
+                if(file_created):
+                    self.data_streamer.start()
+                else:
+                    print("failed to create record file")
+            else:
+                self.data_streamer.start()
 
             res = self.start_animation()
 
@@ -400,15 +420,13 @@ class StreamFrame(Frame):
         signal_data = np.array(self.vag_signal)[-self.spec_data_size:]
 
         #Compute the STFT (using scipy's stft function)
-        f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
+        f, t, Zxx = stft(signal_data, fs=3000, nperseg=self.segment_length,  noverlap=self.overlap)
 
         # Convert the complex STFT to magnitude for the spectrogram
         Sxx = np.abs(Zxx)
 
         # Store the spectrogram in the deque (limit the number of stored spectrograms)
         self.spectrograms.append((f, t, Sxx))
-        #self.spectrograms.append(spectrogram)
-
 
     def stream_data_callback(self, acc_x, acc_y, acc_z, mag, t_index):
         self.x_data.append(acc_x)
@@ -439,8 +457,7 @@ class StreamFrame(Frame):
         #self.ax2.clear()
         if not spectrograms:
             return
-
-        # Get the last spectrogram (most recent one)
+        
         f, t, Sxx = spectrograms[-1]
 
         # Update the plot with the new spectrogram

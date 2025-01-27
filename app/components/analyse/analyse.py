@@ -11,21 +11,27 @@ import time
 import os
 import glob
 
+# this screen must replace the stream screen - previously it was a selection from the main canvas
 class AnalyseFrame(Frame):
     def __init__(self, master,  s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.s = s
         # set up a data reader (note: pass in the get_test_file)
+
+        # the cb is to know if a file has been exported correctly (i.e read from the device.) - this will probably become redundant
         self.data_reader = dr.DataReader(s.get_mount_path(), s.get_frame_length(), s.get_export_dir(), self.exported_data)
 
-        self.grid(row=1, column=0,rowspan=1,columnspan=1, sticky='news',padx=5,pady=5)
-        self.grid_columnconfigure((0,1), weight=1)
-        self.grid_rowconfigure((4,5), weight=1)
+        self.grid(row=1, column=0, sticky='news',padx=5,pady=5)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.config(bg="black")
+        
         # operations frame
         self.operations_frame = Frame(self)
-        self.operations_frame.grid(row=1, column=0, columnspan=5, sticky="nsew")
-        #self.operations_frame.config(bg="blue")
+        self.operations_frame.grid(row=0, column=0,  sticky="nsew")
+        self.operations_frame.config(bg="black")
 
+        """
         # Create a combobox
         self.usb_combo_label = Label(self.operations_frame, text="select a device path:")
         self.usb_combo_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -42,29 +48,36 @@ class AnalyseFrame(Frame):
         self.read_data_button = Button(self.operations_frame, text="Read Data", command= lambda: self.read_device_data())
         self.read_data_button.grid(row=0, column=3, padx=5,pady=5, sticky="w")
         self.read_data_button.configure(bg="blue", fg="white")
+        """
 
-        
-        self.file_select_combo_label = Label(self.operations_frame, text="select a file to analyse:")
-        self.file_select_combo_label.grid(row=0, column=4, padx=5, pady=5, sticky="w")
-        self.file_select = Combobox(self.operations_frame, values=[])
+        self.file_select_combo_label = Label(self.operations_frame, text="select a file to analyse:", bg="black", fg="white")
+        self.file_select_combo_label.grid(row=0, column=4, padx=5, pady=5, sticky="we")
+        self.file_select = Combobox(self.operations_frame, values=[], width=50)
+        self.file_select.set("Select a file to analyze")  # Set placeholder text
         self.file_select.grid(row=0, column=5, padx=10, pady=10)
         self.file_select.bind("<<ComboboxSelected>>", self.on_file_selected)
 
         # read the files in exports directories as part of the UX flow for analysing captured data
         current_directory = os.getcwd()
         parent = os.path.abspath(os.path.join(current_directory, os.pardir))
-        target_directory = os.path.join(parent, "app/exports")
+        target_directory = os.path.join(parent, "app", "exports", "recordings") # change to exports only for test data
+        target_directory = os.path.normpath(target_directory)  # Normalize the path
+
         csv_files = glob.glob(os.path.join(target_directory, '*.csv'))
         
         for f in csv_files:
-            self.file_select['values'] = (*self.file_select['values'], f.split('/')[-1])
+            self.file_select['values'] = (*self.file_select['values'], f.split('\\')[-1])
 
-        self.selected_file = csv_files[0].split('/')[-1]
-        self.analyse_button = Button(self.operations_frame, text="Analyse", command= lambda: self.analyse())
+        #self.selected_file = csv_files[0].split('\\')[-1]
+        self.analyse_button = Button(self.operations_frame, text="Analyse", command= lambda: self.analyse(),
+                                     borderwidth=0,   
+                                        highlightthickness=0,     
+                                        font=("Montserrat", 12, "bold"))
         self.analyse_button.grid(row=0, column=6, padx=5,pady=5, sticky="w")
-        self.analyse_button.configure(bg="blue", fg="white")
+        self.analyse_button.configure(bg="#616CAB", fg="white")
 
         # information frame
+        """
         self.info_frame = Frame(self)
         self.info_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
         
@@ -77,69 +90,52 @@ class AnalyseFrame(Frame):
         self.polling_label = Label(self.info_frame, text="")
         self.polling_label.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
-        # figure 1
-        self.f_band_percent = Figure()
-        self.f_ax = self.f_band_percent.subplots()
-        self.f_ax.set_title(f"Frequency Band Power Contribution")
-        self.f_ax.set_ylim(0, 100)
-        
-        self.f_ax.set_xlabel("frequency bands", fontsize=8)
-        self.f_ax.set_ylabel("% power [a*2/Hz]", fontsize=8)
+        """
 
+        # create a frame to hold outputs
+        self.output_frame = Frame(self, bg="black")
+        self.output_frame.grid(row=1, column=0,  sticky="nsew", padx=5, pady=5)
+        self.output_frame.grid_columnconfigure(0, weight=1)
+        self.output_frame.grid_rowconfigure(0, weight=1)
+
+        # figures
+        self.fig = Figure(facecolor='black')
+        self.f_ax, self.s_ax = self.fig.subplots(nrows=2, ncols=1)
+        self.fig.subplots_adjust(hspace=1)  # Increase this value for more space
+
+        # Configure first subplot (Frequency Band Power Contribution)
+        self.f_ax.set_title("Frequency Band Power Contribution", color="white")
+        self.f_ax.set_ylim(0, 100)
+        self.f_ax.set_xlabel("frequency bands", fontsize=8, color="white")
+        self.f_ax.set_ylabel("% power [a*2/Hz]", fontsize=8, color="white")
         self.f_ax.xaxis.set_ticks_position('bottom')
         self.f_ax.yaxis.set_ticks_position('left')
         self.f_ax.autoscale(True)
-        
-        self.f_band_canvas = FigureCanvasTkAgg(self.f_band_percent, master=self)
-        self.f_band_canvas.get_tk_widget().grid(row=4, column=0,  sticky='nsew', padx=5, pady=5)
+        self.f_ax.set_facecolor("black")
+        self.f_ax.spines['bottom'].set_color('white')
+        self.f_ax.spines['left'].set_color('white')
+        self.f_ax.tick_params(axis='x', colors='white')
+        self.f_ax.tick_params(axis='y', colors='white')
 
-        # figure 2
-        self.spectogram = Figure()
-        self.s_ax = self.spectogram.subplots()
-        self.s_ax.set_title(f"Spectogram")
-        
-        self.s_ax.set_xlabel("time", fontsize=8)
-        self.s_ax.set_ylabel("frequency", fontsize=8)
-
+        # Configure second subplot (Spectrogram)
+        self.s_ax.set_title("Spectrogram", color="white")
+        self.s_ax.set_xlabel("time", fontsize=8, color="white")
+        self.s_ax.set_ylabel("frequency", fontsize=8, color="white")
         self.s_ax.xaxis.set_ticks_position('bottom')
         self.s_ax.yaxis.set_ticks_position('left')
-        self.s_ax.autoscale(True)
-        
-        self.spectogram_canvas = FigureCanvasTkAgg(self.spectogram, master=self)
-        self.spectogram_canvas.get_tk_widget().grid(row=4, column=1,  sticky='nsew', padx=5, pady=5)
-        self.spectogram_cb = None
+        self.s_ax.autoscale(False)
+        self.s_ax.set_facecolor("black")
+        self.s_ax.spines['bottom'].set_color('white')
+        self.s_ax.spines['left'].set_color('white')
+        self.s_ax.tick_params(axis='x', colors='white')
+        self.s_ax.tick_params(axis='y', colors='white')
 
-        # figure 3
-        self.f_band1_spectogram = Figure()
-        self.f_band1_ax = self.f_band1_spectogram.subplots()
-        self.f_band1_ax.set_title(f"50-250 Hz Spectogram")
-        
-        self.f_band1_ax.set_xlabel("time", fontsize=8)
-        self.f_band1_ax.set_ylabel("frequency", fontsize=8)
+        # Add the figure to the Tkinter canvas
+        self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.output_frame)
+        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
 
-        self.f_band1_ax.xaxis.set_ticks_position('bottom')
-        self.f_band1_ax.yaxis.set_ticks_position('left')
-        self.f_band1_ax.autoscale(True)
-        
-        self.f_band1_spectogram_canvas = FigureCanvasTkAgg(self.f_band1_spectogram, master=self)
-        self.f_band1_spectogram_canvas.get_tk_widget().grid(row=5, column=0, columnspan=1, sticky='nsew', padx=5, pady=5)
-        self.f_band1_cb = None
+        self.spectrogram_cb = None
 
-        # figure 4
-        self.f_band2_spectogram = Figure()
-        self.f_band2_ax = self.f_band2_spectogram.subplots()
-        self.f_band2_ax.set_title(f"250-500 Hz Spectogram")
-        
-        self.f_band2_ax.set_xlabel("time", fontsize=8)
-        self.f_band2_ax.set_ylabel("frequency", fontsize=8)
-
-        self.f_band2_ax.xaxis.set_ticks_position('bottom')
-        self.f_band2_ax.yaxis.set_ticks_position('left')
-        self.f_band2_ax.autoscale(True)
-        self.f_band2_cb = None
-        
-        self.f_band2_spectogram_canvas = FigureCanvasTkAgg(self.f_band2_spectogram, master=self)
-        self.f_band2_spectogram_canvas.get_tk_widget().grid(row=5, column=1, columnspan=1, sticky='nsew', padx=5, pady=5)
 
 
         #self.read_and_process_test_file()
@@ -166,15 +162,27 @@ class AnalyseFrame(Frame):
     def exported_data(self, data, path_to_csv):
         self.file_select['values'] = (*self.file_select['values'], path_to_csv)
 
-    def plot_spectogram(self,frequencies, times, Sxx):
-        if(self.spectogram_cb != None):
-            self.spectogram_cb.remove()
+    def plot_spectrogram(self, frequencies, times, Sxx):
+        #if self.spectrogram_cb is not None:
+        #    self.spectrogram_cb.remove()
 
-        cax = self.s_ax.pcolormesh(times, frequencies, 10 * np.log10(Sxx), shading='auto', cmap="viridis")
-        self.spectogram_cb = self.spectogram.colorbar(cax, ax=self.s_ax, label="Intensity")
-        self.spectogram_canvas.draw()
+        #print(Sxx.shape)
+        print("Sxx min:", np.min(Sxx), "Sxx max:", np.max(Sxx))
+        print("fmax", np.max(frequencies), "fmin", np.min(frequencies))
+
+        # Plot the spectrogram using imshow
+        self.im = self.s_ax.imshow(Sxx, aspect='auto', origin='lower', cmap='inferno', extent=[times[0], times[-1], frequencies[0], frequencies[-1]])
+        self.s_ax.set_xlim([times[0], times[-1]])  # Adjust to the time limits of the latest spectrogram
+        self.s_ax.set_ylim([frequencies[0], frequencies[-1]])  # Adjust to the frequency limits of the latest spectrogram
+        
+        # Add a colorbar to the spectrogram
+        self.spectrogram_cb = self.fig.colorbar(self.im, ax=self.s_ax, label="Intensity (dB)")
+
+        # Redraw the figure canvas to update the plot
+        self.fig_canvas.draw()
 
     # probably could reduce to one plot function
+    """
     def plot_f_band1_spectogram(self, frequencies, times, Zxx):
         if(self.f_band1_cb != None):
             self.f_band1_cb.remove()
@@ -182,7 +190,7 @@ class AnalyseFrame(Frame):
         cax = self.f_band1_ax.pcolormesh(times, frequencies, Zxx, shading='gouraud', cmap="viridis")
         self.f_band1_cb = self.f_band1_spectogram.colorbar(cax, ax=self.f_band1_ax, label="Intensity")
         self.f_band1_ax.set_ylim(self.s.get_f_band1()[0], self.s.get_f_band1()[1])
-        self.f_band1_spectogram_canvas.draw()
+        self.fig_canvas.draw()
         
     
     def plot_f_band2_spectogram(self, frequencies, times, Zxx):
@@ -193,18 +201,17 @@ class AnalyseFrame(Frame):
         self.f_band2_cb = self.f_band2_spectogram.colorbar(cax, ax=self.f_band2_ax, label="Intensity")
         self.f_band2_ax.set_ylim(self.s.get_f_band2()[0], self.s.get_f_band2()[1])
         self.f_band2_spectogram_canvas.draw()
-
+    """
 
     def plot_f_bands(self, intervals, f_percentages):
         self.f_ax.clear()
-        print("plotting f bands")
         bars = self.f_ax.bar(intervals, f_percentages, color="c")
         self.f_ax.tick_params(axis='x', labelrotation=90, labelsize=6)
 
         for bar in bars:
             yval = round(bar.get_height(),2)
             self.f_ax.text(bar.get_x() + bar.get_width()/2, yval, f'{yval}', ha='center', va='bottom', fontsize=6)
-        self.f_band_canvas.draw()
+        self.fig_canvas.draw()
 
     def update_poll(self):
         self.usb_port_combo['values'] = []
@@ -232,7 +239,8 @@ class AnalyseFrame(Frame):
     def read_and_process_test_file(self, file):
         #self.test_label["text"]= self.s.get_test_file()
         self.test_label = file
-        path = f"{self.s.get_export_dir()}{file}"
+        #path = f"{self.s.get_export_dir()}{file}"
+        path = f"{self.s.get_export_dir()}/recordings/{file}"
         self.vag_df = pp.read_file(path)
 
         x,y,z,a_mag = pp.extract_axes(self.vag_df)
@@ -241,9 +249,9 @@ class AnalyseFrame(Frame):
         intervals, f_percentages = pp.compute_frequency_band_percentages(50, a_mag, bp_filter_settings)
         frequencies, times, Sxx = pp.compute_spectogram(a_mag, bp_filter_settings, spectogram_settings)
         # these are very similar and could be multiprocessed
-        f_band1, times_band1, Zxx_band1 = pp.compute_freq_band_spectogram_from_stft(a_mag, bp_filter_settings, spectogram_settings, self.s.get_f_band1())
-        f_band2, times_band2, Zxx_band2 = pp.compute_freq_band_spectogram_from_stft(a_mag, bp_filter_settings, spectogram_settings, self.s.get_f_band2())
+        #f_band1, times_band1, Zxx_band1 = pp.compute_freq_band_spectogram_from_stft(a_mag, bp_filter_settings, spectogram_settings, self.s.get_f_band1())
+        #f_band2, times_band2, Zxx_band2 = pp.compute_freq_band_spectogram_from_stft(a_mag, bp_filter_settings, spectogram_settings, self.s.get_f_band2())
         self.plot_f_bands(intervals, f_percentages)
-        self.plot_spectogram(frequencies, times, Sxx)
-        self.plot_f_band1_spectogram(f_band1, times_band1, Zxx_band1)
-        self.plot_f_band2_spectogram(f_band2, times_band2, Zxx_band2)
+        self.plot_spectrogram(frequencies, times, Sxx)
+        #self.plot_f_band1_spectogram(f_band1, times_band1, Zxx_band1)
+        #self.plot_f_band2_spectogram(f_band2, times_band2, Zxx_band2)

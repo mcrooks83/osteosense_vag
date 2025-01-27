@@ -24,7 +24,7 @@ class Settings:
         self.BUFFER_SIZE = 10000
 
         self.default_frame = 0 # 0 = stream, 1 = analyse
-        self.log = 0
+        self.record = 0 #flag to set if recording
 
         # filter settings 
         self.sampling_rate = 3000 # 3Khz
@@ -36,8 +36,8 @@ class Settings:
         self.filter_order = 5   # 9th order has been used in literature?
 
         # spectogram settings
-        self.segment_length = 512  # Length of each segment
-        self.overlap =  100 #self.segment_length // 2  # 50% overlap
+        self.segment_length = 1024  # Length of each segment
+        self.overlap = self.segment_length // 2  # 50% overlap
         self.window = 'hann'
         self.f_band1 = (50, 250)
         self.f_band2 = (250, 500)
@@ -72,15 +72,15 @@ class Settings:
         if not os.path.exists(self.export_dir):
             os.mkdir(self.export_dir)
 
-        log_dir = os.path.join(self.export_dir, "logs")
+        log_dir = os.path.join(self.export_dir, "recordings")
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
 
-    def get_log(self):
-        return self.log
+    def get_record(self):
+        return self.record
     
-    def set_log(self, log):
-        self.log = log
+    def set_record(self, record):
+        self.record = record
         
     def get_test_file(self):
         return self.test_file

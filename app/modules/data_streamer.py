@@ -1,6 +1,7 @@
 import serial
 from modules import convert as con
 import threading
+import queue
 import os
 from datetime import datetime
 from scipy.signal import butter, filtfilt, resample, lfilter
@@ -13,8 +14,6 @@ from scipy.signal.windows import hann
 class DataStreamer(threading.Thread):
     def __init__(self, settings,  conversion, frame_length, cb, vag_cb,  ser, gyr, audio_processor):
         super().__init__()
-        #self.port_name = port_name
-        #self.baud_rate = baud_rate
         self.s = settings
         self.conversion = conversion
         self.frame_length = frame_length
@@ -24,8 +23,6 @@ class DataStreamer(threading.Thread):
         self.vag_cb = vag_cb
         #self.spec_cb = spec_cb
         self.row_count = 0
-        self.log = 0
-        self.log_filename = ""
         self.gyr = gyr
         self.audio_processor = audio_processor # so we can put data on it
         self.audio_buffer = []  # Buffer for storing a chunk of vag data to pass to the audio_processor
@@ -36,27 +33,60 @@ class DataStreamer(threading.Thread):
         self.b = b
         self.a = a
         self.chunk = []
-
         # spectrogram
         # probably better in settings
-        self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over.
+        self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over in the streaming 
         self.segment_length = 1024
         self.hann_window = hann(self.segment_length)
         self.overlap = self.segment_length // 2  # 50% overlap
 
-    def compute_spectrogram(self, signal_data):
-       
+        # Queue for CSV writing
+        self.csv_queue = queue.Queue()
+        self.csv_thread = None  # Writer thread placeholder
+        self.recording_active = False  # Tracking recording state (this is probably a duplicate of the record setting)
+        self.file_path = None
 
+    def start_csv_writer(self):
+        """Start the CSV writing thread if not already running."""
+        if not self.recording_active:
+            self.recording_active = True
+            self.create_record_file()
+            self.csv_thread = threading.Thread(target=self.csv_writer, daemon=True)
+            self.csv_thread.start()
+            print("CSV writer thread started.")
+
+    def stop_csv_writer(self):
+        """Stop the CSV writing thread if running."""
+        if self.recording_active:
+            self.recording_active = False
+            self.csv_queue.put(None)  # Signal the writer thread to exit
+            if self.csv_thread:
+                self.csv_thread.join()
+                self.csv_thread = None
+            print("CSV writer thread stopped.")
+
+    def csv_writer(self):
+        """Background thread for writing CSV data."""
+        while self.recording_active or not self.csv_queue.empty():
+            try:
+                row = self.csv_queue.get(timeout=1)
+                with open(self.file_path, "a", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow(row)
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"CSV writing error: {e}")
+
+    def compute_spectrogram(self, signal_data):
         #Compute the STFT (using scipy's stft function)
-        f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
+        # get the samping rate from settings not hardcoded
+        f, t, Zxx = stft(signal_data, fs=3000, nperseg=self.segment_length,  noverlap=self.overlap)
 
         # Convert the complex STFT to magnitude for the spectrogram
         Sxx = np.abs(Zxx)
 
-        # Store the spectrogram in the deque (limit the number of stored spectrograms)
-        #self.spectrograms.append((f, t, Sxx))
         return ((f,t,Sxx))
-        #self.spectrograms.append(spectrogram)
 
     def get_audio_buffer_size(self):
         return self.buffer_size
@@ -64,45 +94,46 @@ class DataStreamer(threading.Thread):
     def filter_input_stream(self,data):
         return filtfilt(self.b, self.a, data)
 
-    def create_log_file(self):
+    # when a file is created the csv writer thread is also started
+    def create_record_file(self):
         current_directory = os.getcwd()
         parent = os.path.abspath(os.path.join(current_directory, os.pardir))
-        self.target_directory = os.path.join(parent, "app/exports/logs/")
-        print(f"log files will be output to {self.target_directory}")
+        self.target_directory = os.path.join(parent, "app/exports/recordings/")
+        print(f"recordings will be output to {self.target_directory}")
 
-        # set up the log file
-        if(self.log == 1):
-            current_datetime = datetime.now()
-            self.log_filename = f"{current_datetime.strftime('%d%m%Y%H%M')}_log.csv"
-            self.file_path = os.path.join(self.target_directory, self.log_filename)
+        current_datetime = datetime.now()
+        record_file_name = f"{current_datetime.strftime('%d%m%Y%H%M')}_recording.csv"
+        self.file_path = os.path.join(self.target_directory, record_file_name)
 
-            # Check if the file exists
-            file_exists = os.path.isfile(self.file_path)
+        # Check if the file exists
+        file_exists = os.path.isfile(self.file_path)
 
-            try:
-                # Open the file in append mode
-                with open(self.file_path, "a", newline="") as file:
-                    writer = csv.writer(file)
-                    # Write the header only if the file does not exist
-                    if not file_exists:
-                        writer.writerow(["packet_count", "X", "Y", "Z"])
-                print(f"File '{self.file_path}' created and header written.")
+        try:
+            # Open the file in append mode
+            with open(self.file_path, "a", newline="") as file:
+                writer = csv.writer(file)
+                # Write the header only if the file does not exist
+                if not file_exists:
+                    writer.writerow(["packet_count", "acc_x", "acc_y", "acc_z", "a_mag"])
+            print(f"File '{self.file_path}' created and header written.")
 
-            except Exception as e:
-                print(f"An error occurred: {e}")
+            # start csv writer thread
+            self.start_csv_writer()
 
-    def set_logging(self, log):
-        self.log = log   # 1 = log data to csv
+            # return true if successful
+            return True
 
-    def set_log_filename(self, filename):
-        self.log_filename = filename
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.stop_csv_writer()
+            # return false on some error
+            return False
+
 
     def run(self):
-        #self.ser = self.open_serial_port()
         if self.ser:
             while self.running:
                 self.poll_usb_port()
-            #self.close_serial_port()
 
     def poll_usb_port(self):
             try:
@@ -128,25 +159,24 @@ class DataStreamer(threading.Thread):
                     if(self.s.get_sonify_select()==1):
                         self.audio_processor.data_queue.put(self.chunk)
 
-                    # compute the spectrom gram here and add to a specific callback?
-                     #Compute the STFT (using scipy's stft function)
-                    #if len(self.vag_signal) >= self.spec_data_size:
-                        #f, t, Zxx = stft(signal_data, fs=3300, nperseg=self.segment_length,  noverlap=self.overlap)
-
-                    # Convert the complex STFT to magnitude for the spectrogram
-                    #    Sxx = np.abs(Zxx)
-                    #    self.spec_cb((f, t, Sxx))
+                    # if the record flag is set the writer should have been started and so we can put data in the csv queue
+                    if self.s.get_record() == 1:
+                        self.csv_queue.put([self.row_count, acc_x, acc_y, acc_z, mag])
 
                     # write data to csv if logging is set
-                    if(self.log == 1):
+                    # do this based on settings
+                    # this is a slow and perhaps should be off loaded to a new thread?
+                    """
+                    if(self.s.get_record() == 1):
                         with open(self.file_path, "a", newline="") as file:
                             writer = csv.writer(file)
                             # Write new data to the CSV file
-                            writer.writerow([self.row_count, acc_x, acc_y, acc_z])
-
+                            writer.writerow([self.row_count, acc_x, acc_y, acc_z, mag])
+                    """
 
             except serial.SerialException as e:
                 print(f"Error during polling: {e}")
 
     def stop(self):
         self.running = False
+        self.stop_csv_writer()

@@ -3,11 +3,10 @@ import sys
 sys.path.append("..")
 import pandas as pd
 import numpy as np
-from scipy.signal import medfilt, butter, filtfilt, lfilter, find_peaks, find_peaks_cwt,resample, detrend
-from scipy.signal import welch, spectrogram, get_window, stft
+from scipy.signal import medfilt, butter, filtfilt, lfilter
+from scipy.signal import welch,  get_window, stft
 import math
-import time
-import os, sys
+import sys
 
 def read_file(path):
     df = pd.read_csv(path)
@@ -110,10 +109,11 @@ def compute_spectogram(data, filter_settings, spectogram_settings):
     f_a_mag = filter_signal(b,a, data, "filtfilt")
 
     window = get_window(spectogram_settings['window'], spectogram_settings['segment_length']) 
-    #op_sp_f, op_sp_t, op_Sxx = spectrogram(op_mag, fs=fs, window=window, nperseg=segment_length, noverlap=overlap, scaling='density')
-    frequencies, times, Sxx = spectrogram(f_a_mag, fs=filter_settings["sampling_rate"], window=window, nperseg=spectogram_settings["segment_length"],
-                                           noverlap=spectogram_settings['overlap'], scaling='density')
-    return frequencies, times, Sxx
+    
+    f, t, Zxx = stft(f_a_mag, fs=filter_settings["sampling_rate"], window=window,  nperseg=spectogram_settings["segment_length"],
+                         noverlap=spectogram_settings['overlap'])
+    Sxx = np.abs(Zxx)
+    return f, t, Sxx
 
 def compute_freq_band_spectogram_from_stft(data, filter_settings, spectogram_settings, band):
     print(band)
@@ -128,14 +128,11 @@ def compute_freq_band_spectogram_from_stft(data, filter_settings, spectogram_set
     f, t, Zxx = stft(f_a_mag, fs=filter_settings["sampling_rate"], window=window,  nperseg=spectogram_settings["segment_length"],
                          noverlap=spectogram_settings['overlap'])
     
-    
     # compute power from stft
     op_pwr = np.abs(Zxx)**2
     p_Zxx = 10 * np.log10(np.abs(op_pwr))
-    print(f)
     freq_mask = (f >= band[0]) & (f <= band[1])  # Create a boolean mask
     frequencies_filtered = f[freq_mask]  # Apply mask to frequencies
-    print(frequencies_filtered)
     Zxx_dB_filtered = p_Zxx[freq_mask, :]  # Apply mask to spectrogram data
 
     return frequencies_filtered, t, Zxx_dB_filtered
