@@ -1,4 +1,4 @@
-from tkinter import  Frame, Button, NORMAL, DISABLED, IntVar, Checkbutton
+from tkinter import  Frame, Button, NORMAL, DISABLED, IntVar, StringVar, Checkbutton, Radiobutton
 from tkinter.ttk import Combobox, Style
 from matplotlib.pyplot import Figure
 import matplotlib.animation as animation
@@ -142,7 +142,43 @@ class StreamFrame(Frame):
         self.im = None  # For storing the image object to update later
 
         self.meter = lm.LevelMeter(self.operations_frame)
-        self.meter.grid(row=1, column=0, padx=10, columnspan=999, pady=50, sticky="nsew")
+        self.meter.grid(row=2,column=0, padx=10, columnspan=999, pady=50, sticky="nsew")
+
+        self.positions_frame = Frame(self.operations_frame, bg="black")
+        self.positions_frame.grid(row=1, column=0, sticky="ew", pady=20,)
+
+
+        self.position = StringVar(self, "")
+
+        self.ml_rb = Radiobutton(self.positions_frame, text="medial", value="m", variable = self.position, 
+                                     command=self.select_position, bg="black", fg="white",
+                                     font=("Montserrat", 14), 
+                                     selectcolor="#616CAB",
+                                     anchor="w", 
+                                     borderwidth=0,             # Removes the border
+                                     highlightthickness=0,      # Removes the highlight border  
+                                     )
+        self.ml_rb.grid(row=0,column=0,pady=5, sticky="w", padx=5)
+
+        self.pat_rb = Radiobutton(self.positions_frame, text="patella", value="p", variable = self.position, 
+                                     command=self.select_position, bg="black", fg="white",
+                                     font=("Montserrat", 14), 
+                                     selectcolor="#616CAB",
+                                     anchor="w", 
+                                     borderwidth=0,             # Removes the border
+                                     highlightthickness=0,      # Removes the highlight border  
+                                     )
+        self.pat_rb.grid(row=0,column=1,pady=5, sticky="w", padx=5)
+
+        self.l_rb = Radiobutton(self.positions_frame, text="lateral", value="l", variable = self.position, 
+                                     command=self.select_position, bg="black", fg="white",
+                                     font=("Montserrat", 14), 
+                                     selectcolor="#616CAB",
+                                     anchor="w", 
+                                     borderwidth=0,             # Removes the border
+                                     highlightthickness=0,      # Removes the highlight border  
+                                     )
+        self.l_rb.grid(row=0,column=2,pady=5, sticky="w", padx=5)
 
         self.output_frame = Frame(self, bg="black")
         self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
@@ -231,6 +267,9 @@ class StreamFrame(Frame):
         self.data_streamer = None
         self.serial_int = None
         self.sensor_name = ""
+
+    def select_position(self):
+        print("position selected:", self.position.get())
 
     def identify(self):
         message = f"IDENTIFY 1\n"

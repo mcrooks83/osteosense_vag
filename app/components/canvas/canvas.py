@@ -27,7 +27,6 @@ class Canvas(Frame):
                                      font=("Montserrat", 14), 
                                      selectcolor="#616CAB",
                                      anchor="w", 
-                                   
                                      )
         self.stream_rb.grid(row=0,column=0,pady=5, sticky="w", padx=20)
         self.analyse_rb = Radiobutton(self.operations_frame, text="Analyse", value=1, variable = self.stream_var, 
