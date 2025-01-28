@@ -48,7 +48,7 @@ class Canvas(Frame):
 
     def select_frame(self):
         if(self.stream_var.get() == 0):
-            self.analyse_frame.grid_forget()
+            self.analyse_frame.grid_forget() # deletes the frame
             self.stream_frame = StreamFrame(self, self.s) 
         elif(self.stream_var.get() == 1):
             self.stream_frame.grid_forget()

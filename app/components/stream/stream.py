@@ -16,7 +16,10 @@ from components.stream import dot_level_meter as lm
 class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
+
+
         self.s = s  # settings
+        print("record flag state:", self.s.get_record()) # state of record flag
         self.configure(bg="black")
         self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
         self.grid_columnconfigure(0, weight=1)
@@ -102,7 +105,7 @@ class StreamFrame(Frame):
         )
         self.sonify_rb.grid(row=0, column=6, padx=10, pady=5, sticky="e")
 
-        self.record_var = IntVar()
+        self.record_var = IntVar(value=self.s.get_record())
         
         # this will be used to record - it should record the VAG signal rather than the raw data set    
         self.record_cb = Checkbutton(self.ctl_buttons_frame, 
@@ -129,7 +132,7 @@ class StreamFrame(Frame):
         self.mag_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
         self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size())
-        self.spectrograms = collections.deque(maxlen=20)  # Store a fixed number of spectrograms'
+        self.spectrograms = collections.deque(maxlen=10)  # Store a fixed number of spectrograms'
 
         # probably better in settings
         self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over.
@@ -187,7 +190,7 @@ class StreamFrame(Frame):
         self.ax1.set_facecolor("black")
         self.ax1.spines['bottom'].set_color('white')
         self.ax1.spines['left'].set_color('white')
-        self.ax1.set_xlabel("packet count", fontsize=10, color="white")
+        self.ax1.set_xlabel("time", fontsize=10, color="white")
         self.ax1.set_ylabel("acceleration (g)", fontsize=10, color="white")
         self.ax1.xaxis.set_ticks_position('bottom')
         self.ax1.yaxis.set_ticks_position('left')
@@ -443,14 +446,12 @@ class StreamFrame(Frame):
         self.ax.plot(tx, accel_z, label="z accel", linewidth=1, color="#616CAB")
         self.ax.plot(tx, mag, label="mag", linewidth=1, color="red")
         self.ax.legend()
-        #elf.ax.grid(False)
         self.ax.set_ylim(-10, 10)
 
     def animate1(self, i,  vag):
         self.ax1.clear()
         self.ax1.plot(vag, label="vag signal", linewidth=1, color="#1BD3EA")
         self.ax1.legend()
-        #elf.ax1.grid(False)
         self.ax1.set_ylim(-4, 4)
     
     def animate2(self, i,  spectrograms):

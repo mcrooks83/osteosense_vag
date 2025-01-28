@@ -9,6 +9,7 @@ from modules import data_reader as dr
 import numpy as np
 import time
 import os
+import sys
 import glob
 
 # this screen must replace the stream screen - previously it was a selection from the main canvas
@@ -59,6 +60,7 @@ class AnalyseFrame(Frame):
 
         # read the files in exports directories as part of the UX flow for analysing captured data
         current_directory = os.getcwd()
+        print(current_directory)
         parent = os.path.abspath(os.path.join(current_directory, os.pardir))
         target_directory = os.path.join(parent, "app", "exports", "recordings") # change to exports only for test data
         target_directory = os.path.normpath(target_directory)  # Normalize the path
@@ -66,7 +68,10 @@ class AnalyseFrame(Frame):
         csv_files = glob.glob(os.path.join(target_directory, '*.csv'))
         
         for f in csv_files:
-            self.file_select['values'] = (*self.file_select['values'], f.split('\\')[-1])
+            if(sys.platform == "linux"):
+                self.file_select['values'] = (*self.file_select['values'], f.split('/')[-1])
+            else: # assume windows for now
+                self.file_select['values'] = (*self.file_select['values'], f.split('\\')[-1])
 
         #self.selected_file = csv_files[0].split('\\')[-1]
         self.analyse_button = Button(self.operations_frame, text="Analyse", command= lambda: self.analyse(),
@@ -109,7 +114,7 @@ class AnalyseFrame(Frame):
 
         # Configure first subplot (Frequency Band Power Contribution)
         self.f_ax.set_title("Frequency Band Power Contribution", color="white")
-        #self.f_ax.set_ylim(0, 100)
+        self.f_ax.set_ylim(0, 50)
         self.f_ax.set_xlabel("frequency bands", fontsize=8, color="white")
         self.f_ax.set_ylabel("% power [a*2/Hz]", fontsize=8, color="white")
         self.f_ax.xaxis.set_ticks_position('bottom')
@@ -177,6 +182,9 @@ class AnalyseFrame(Frame):
         self.s_ax.set_ylim([frequencies[0], frequencies[-1]])  # Adjust to the frequency limits of the latest spectrogram
         
         # Add a colorbar to the spectrogram
+        if hasattr(self, 'spectrogram_cb') and self.spectrogram_cb:
+            self.spectrogram_cb.remove()  # Remove the existing colorbar
+
         self.spectrogram_cb = self.fig.colorbar(self.im, ax=self.s_ax, label="Intensity (dB)")
 
         # Redraw the figure canvas to update the plot
@@ -212,6 +220,8 @@ class AnalyseFrame(Frame):
         for bar in bars:
             yval = round(bar.get_height(),2)
             self.f_ax.text(bar.get_x() + bar.get_width()/2, yval, f'{yval}', ha='center', va='bottom', fontsize=6)
+
+        self.f_ax.set_ylim(0, 50)
         self.fig_canvas.draw()
 
     def update_poll(self):
@@ -241,7 +251,7 @@ class AnalyseFrame(Frame):
         #self.test_label["text"]= self.s.get_test_file()
         self.test_label = file
         #path = f"{self.s.get_export_dir()}{file}"
-        path = f"{self.s.get_export_dir()}/recordings/{file}"
+        path = f"{self.s.get_export_dir()}/recordings/{file}" #windows
         self.vag_df = pp.read_file(path)
 
         x,y,z,a_mag = pp.extract_axes(self.vag_df)

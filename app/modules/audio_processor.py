@@ -8,8 +8,8 @@ class AudioProcessor(threading.Thread):
     def __init__(self, settings):
         super().__init__()
         self.s = settings
-        self.audio_sampling_rate=3300  # same as sampling rate for the sensor
-        self.buffer_size=512
+        self.audio_sampling_rate=3000  # same as sampling rate for the sensor
+        self.buffer_size = settings.get_audio_buffer_size()
         self.data_queue = queue.Queue()
         self.audio_buffer = []  # Buffer for storing magnitdue data
         self.running = False
@@ -34,8 +34,6 @@ class AudioProcessor(threading.Thread):
         if len(self.chunk) >= self.buffer_size:
 
             self.chunk += self.pink_noise(len(self.chunk), gain=0.3)
-            
-            
             self.chunk = np.convolve(self.chunk, np.array([0.6, 0.3, 0.1]), mode='same')
             # Normalize for audio playback
             #self.chunk = self.chunk / np.max(np.abs(self.chunk))

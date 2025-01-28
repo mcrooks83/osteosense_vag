@@ -23,7 +23,10 @@ class Settings:
 
         self.BUFFER_SIZE = 10000
 
+        self.audio_buffer_size = 1024
+
         self.default_frame = 0 # 0 = stream, 1 = analyse
+
         self.record = 0 #flag to set if recording
 
         # filter settings 
@@ -43,6 +46,9 @@ class Settings:
         self.f_band2 = (250, 500)
 
         self.make_dirs()
+
+    def get_audio_buffer_size(self):
+        return self.audio_buffer_size
 
     def get_sampling_rate(self):
         return self.sampling_rate

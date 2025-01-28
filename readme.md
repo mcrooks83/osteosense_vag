@@ -78,3 +78,7 @@ a set of notebooks for understanding and analyzing VAG signals.  These are all i
 
 
 
+### Features /  Bugs
+3. recording is still a bit slow
+5. time axis of vag signal graph
+7. click to tag ML / L / Patella (get correct names)

@@ -26,7 +26,7 @@ class DataStreamer(threading.Thread):
         self.gyr = gyr
         self.audio_processor = audio_processor # so we can put data on it
         self.audio_buffer = []  # Buffer for storing a chunk of vag data to pass to the audio_processor
-        self.buffer_size = 512
+        self.buffer_size = settings.get_audio_buffer_size()
         # create a bandpass filter
         filter_settings = self.s.get_filter_settings_for_bandpass()
         b, a = butter(filter_settings["filter_order"], [filter_settings["low_cut_off"], filter_settings["high_cut_off"]], btype='bandpass', fs=filter_settings["sampling_rate"])
@@ -152,7 +152,7 @@ class DataStreamer(threading.Thread):
                         self.audio_buffer = self.audio_buffer[self.buffer_size:]  # Remove the processed samples
 
                         # band pass filter
-                        self.chunk = self.filter_input_stream(self.chunk)
+                        self.chunk = self.filter_input_stream(self.chunk) * 10
                         self.vag_cb(self.chunk)
 
                     # only do this is sonfiy is selected
