@@ -9,6 +9,7 @@ import csv
 import numpy as np
 from scipy.signal import spectrogram, stft
 from scipy.signal.windows import hann
+import pywt
 
 
 class DataStreamer(threading.Thread):
@@ -93,6 +94,25 @@ class DataStreamer(threading.Thread):
 
     def filter_input_stream(self,data):
         return filtfilt(self.b, self.a, data)
+    
+    # original settings = db4 soft
+    def wavelet_denoise(self, signal, wavelet='db4', level=3, method="Default"):
+        # wavelet db4 coif5 sym8 (not much difference)
+        coeffs = pywt.wavedec(signal, wavelet, mode="per")
+
+        # Estimate noise sigma using the MAD method (from the detail coefficients at the finest level)
+        sigma = np.median(np.abs(coeffs[-1])) / 0.6745 
+        # Use different thresholding strategies
+        if method == 'BayesShrink':
+            threshold = sigma
+        elif method == 'Universal':
+            threshold = np.sqrt(2 * np.log(len(signal))) * sigma
+        elif method == 'Default':  # Default to manual std-based thresholding
+            threshold = np.std(coeffs[-level])
+
+        # mode hard soft
+        coeffs = [pywt.threshold(c, threshold, mode="soft") for c in coeffs]
+        return pywt.waverec(coeffs, wavelet, mode="per")
 
     # when a file is created the csv writer thread is also started
     def create_record_file(self):
@@ -152,12 +172,13 @@ class DataStreamer(threading.Thread):
                         self.audio_buffer = self.audio_buffer[self.buffer_size:]  # Remove the processed samples
 
                         # band pass filter
-                        self.chunk = self.filter_input_stream(self.chunk) * 10
+                        self.chunk = self.filter_input_stream(self.chunk) #* 10
+                        self.chunk = self.wavelet_denoise(self.chunk)
                         self.vag_cb(self.chunk)
 
-                    # only do this is sonfiy is selected
-                    if(self.s.get_sonify_select()==1):
-                        self.audio_processor.data_queue.put(self.chunk)
+                        # only do this is sonfiy is selected
+                        if(self.s.get_sonify_select()==1):
+                            self.audio_processor.data_queue.put(self.chunk)
 
                     # if the record flag is set the writer should have been started and so we can put data in the csv queue
                     if self.s.get_record() == 1:

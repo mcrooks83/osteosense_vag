@@ -17,16 +17,15 @@ class StreamFrame(Frame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-
         self.s = s  # settings
         print("record flag state:", self.s.get_record()) # state of record flag
         self.configure(bg="black")
-        self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=5)
+        self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=2)
         self.grid_columnconfigure(0, weight=1)
 
         # Create a frame for operations and controls (buttons)
         self.operations_frame = Frame(self, bg="black")
-        self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=2)
         self.operations_frame.grid_columnconfigure(0, weight=1)
         self.operations_frame.grid_rowconfigure(0, weight=1) # operations frame
         self.operations_frame.grid_rowconfigure(1, weight=1) # output frame
@@ -52,12 +51,12 @@ class StreamFrame(Frame):
 
         self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[], style="TCombobox")
         #self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
-        self.usb_port_combo.grid(row=0, column=0, padx=5, pady=5)
+        self.usb_port_combo.grid(row=0, column=0, padx=5, pady=2)
         self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
 
         #self.sensor_name_label = Label(self.operations_frame, text="")
-        #self.sensor_name_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        #self.sensor_name_label.grid(row=0, column=1, padx=5, pady=2, sticky="w")
 
         # Start and Stop buttons
         self.poll_device = Button(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports(),
@@ -73,7 +72,7 @@ class StreamFrame(Frame):
             highlightthickness=0,      # Removes the highlight border  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
-        self.start_button.grid(row=0, column=4, padx=10, pady=5, sticky="e")
+        self.start_button.grid(row=0, column=4, padx=10, pady=2, sticky="e")
         self.start_button.configure(bg="#616CAB", fg="white")
 
         self.stop_button = Button(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream(), 
@@ -81,7 +80,7 @@ class StreamFrame(Frame):
             highlightthickness=0,      # Removes the highlight border  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
-        self.stop_button.grid(row=0, column=5, padx=10, pady=5, sticky="e")
+        self.stop_button.grid(row=0, column=5, padx=10, pady=2, sticky="e")
         self.stop_button.configure(bg="#F3F2F7", fg="#5A72ED")
 
         self.sonify_var = IntVar(value=1)
@@ -103,7 +102,7 @@ class StreamFrame(Frame):
             variable=self.sonify_var, 
             command=self.set_sonify
         )
-        self.sonify_rb.grid(row=0, column=6, padx=10, pady=5, sticky="e")
+        self.sonify_rb.grid(row=0, column=6, padx=10, pady=2, sticky="e")
 
         self.record_var = IntVar(value=self.s.get_record())
         
@@ -119,10 +118,10 @@ class StreamFrame(Frame):
             activeforeground="white",  # Keeps text white on hover
             selectcolor="#616CAB",  # Checkbox background color when selected
             onvalue=1, offvalue=0, variable=self.record_var, command=self.set_record)
-        self.record_cb.grid(row=0, column=7, padx=10, pady=5, sticky="e")
+        self.record_cb.grid(row=0, column=7, padx=10, pady=2, sticky="e")
 
         #self.identify_button = Button(self.operations_frame, text="Identify", command=lambda: self.identify())
-        #self.identify_button.grid(row=0, column=6, padx=5, pady=5, sticky="w")
+        #self.identify_button.grid(row=0, column=6, padx=5, pady=2, sticky="w")
         #self.identify_button.configure(bg="purple", fg="white")
 
         # Create data buffers
@@ -142,8 +141,9 @@ class StreamFrame(Frame):
         self.im = None  # For storing the image object to update later
 
         self.meter = lm.LevelMeter(self.operations_frame)
-        self.meter.grid(row=2,column=0, padx=10, columnspan=999, pady=50, sticky="nsew")
+        self.meter.grid(row=2,column=0, padx=10, columnspan=999, pady=20, sticky="nsew")
 
+        """
         self.positions_frame = Frame(self.operations_frame, bg="black")
         self.positions_frame.grid(row=1, column=0, sticky="ew", pady=20,)
 
@@ -158,7 +158,7 @@ class StreamFrame(Frame):
                                      borderwidth=0,             # Removes the border
                                      highlightthickness=0,      # Removes the highlight border  
                                      )
-        self.ml_rb.grid(row=0,column=0,pady=5, sticky="w", padx=5)
+        self.ml_rb.grid(row=0,column=0,pady=2, sticky="w", padx=5)
 
         self.pat_rb = Radiobutton(self.positions_frame, text="patella", value="p", variable = self.position, 
                                      command=self.select_position, bg="black", fg="white",
@@ -168,7 +168,7 @@ class StreamFrame(Frame):
                                      borderwidth=0,             # Removes the border
                                      highlightthickness=0,      # Removes the highlight border  
                                      )
-        self.pat_rb.grid(row=0,column=1,pady=5, sticky="w", padx=5)
+        self.pat_rb.grid(row=0,column=1,pady=2, sticky="w", padx=5)
 
         self.l_rb = Radiobutton(self.positions_frame, text="lateral", value="l", variable = self.position, 
                                      command=self.select_position, bg="black", fg="white",
@@ -178,10 +178,10 @@ class StreamFrame(Frame):
                                      borderwidth=0,             # Removes the border
                                      highlightthickness=0,      # Removes the highlight border  
                                      )
-        self.l_rb.grid(row=0,column=2,pady=5, sticky="w", padx=5)
-
+        self.l_rb.grid(row=0,column=2,pady=2, sticky="w", padx=5)
+        """
         self.output_frame = Frame(self, bg="black")
-        self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
+        self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=2)
         self.output_frame.grid_columnconfigure(0, weight=1)
 
         # figures
@@ -247,17 +247,17 @@ class StreamFrame(Frame):
         self.ax2.tick_params(axis='y', colors='white')
 
         self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.output_frame)
-        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='new', padx=5, pady=2)
 
         """
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self.output_frame)
-        self.vag_stream_canvas.get_tk_widget().grid(row=0, column=0,  sticky='nesw', padx=5, pady=5)
+        self.vag_stream_canvas.get_tk_widget().grid(row=0, column=0,  sticky='nesw', padx=5, pady=2)
 
         self.vag_sonify_stream_canvas = FigureCanvasTkAgg(self.vag_sonify_stream, master=self.output_frame)
-        self.vag_sonify_stream_canvas.get_tk_widget().grid(row=0, column=1, sticky='nsew', padx=5, pady=5)
+        self.vag_sonify_stream_canvas.get_tk_widget().grid(row=0, column=1, sticky='nsew', padx=5, pady=2)
 
         self.vag_heatmap_stream_canvas = FigureCanvasTkAgg(self.vag_spectrum_stream, master=self.output_frame)
-        self.vag_heatmap_stream_canvas.get_tk_widget().grid(row=0, column=2, sticky='nsew', padx=5, pady=5)
+        self.vag_heatmap_stream_canvas.get_tk_widget().grid(row=0, column=2, sticky='nsew', padx=5, pady=2)
         """
 
         self.ani_is_running = False

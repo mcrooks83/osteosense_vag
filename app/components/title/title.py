@@ -3,9 +3,9 @@ from tkinter import Label, CENTER
 class Title(Label):
     def __init__(self, master, text, *args, **kwargs):
         super().__init__(master, 
-                         width=60, 
-                         height=2, 
-                         pady=2, 
+                         width=80, 
+                         height=1, 
+                         pady=1, 
                          bg='black', 
                          fg="#616CAB", 
                          text=text,  

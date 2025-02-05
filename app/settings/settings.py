@@ -35,8 +35,8 @@ class Settings:
 
         # these could be settable in the UI
         self.low_cut_off = 100 # removes muscle artifacts and baseline wander
-        self.high_cut_off = 1000  # slightly higher than papers
-        self.filter_order = 5   # 9th order has been used in literature?
+        self.high_cut_off = 1000  # 
+        self.filter_order = 4   # 9th order has been used in literature?
 
         # spectogram settings
         self.segment_length = 1024  # Length of each segment
