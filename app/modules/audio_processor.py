@@ -13,7 +13,7 @@ class AudioProcessor(threading.Thread):
         self.data_queue = queue.Queue()
         self.audio_buffer = []  # Buffer for storing magnitdue data
         self.running = False
-        self.chunk = []
+        self.audio_audio_chunk = []
 
     def pink_noise(self, length, gain=0.1):
         uneven = length % 2
@@ -24,35 +24,65 @@ class AudioProcessor(threading.Thread):
     
 
     ''' 
-        change the gamma value to see what happens -> higher value will shift the frequency output more 
-        rapidly with changes in accleration
-
-        Try: (comes before generating the sound)
-        # Control the amplitude based on the acceleration signal
-        amplitude_env = self.chunk  # Linear envelope from 0 to 1 based on chunk
-        amplitude_env = np.clip(amplitude_env, 0.1, 1)  # Avoid completely silent (no volume) sound
-
-        (comes after generating the sound)
-        # Apply volume envelope to the sound wave
-        out_audio *= amplitude_env  # Scale by the envelope
+       an attempt at audification 
     '''
-    def sonify_signal(self, base, max, gamma, use_quadratic=False, use_log=True):
+    def audify_signal(self, base, max, gamma, use_quadratic=False, use_log=False):
         # new attempt to play actual sounds
-        self.chunk = np.abs(self.chunk)
-        self.chunk /= np.max(self.chunk)  # Scale between 0 and 1)
+        self.audio_audio_chunk = np.abs(self.audio_chunk)
+        self.audio_chunk /= np.max(self.audio_chunk)  # Scale between 0 and 1)
+
         if(use_quadratic):
-            dynamic_freq = base + (self.chunk ** gamma) * (max - base)
+            dynamic_freq = base + (self.audio_chunk ** gamma) * (max - base)
         elif(use_log):
-            dynamic_freq = base * (max / base) ** (self.chunk ** gamma)
+            dynamic_freq = base * (max / base) ** (self.audio_chunk ** gamma)
         else:
-            dynamic_freq = base + self.chunk * (max - base)
+            dynamic_freq = base + self.audio_chunk * (max - base)
+            #dynamic_freq = base * (max / base) ** np.power(self.audio_chunk, gamma * 2)
 
-        dynamic_freq = np.maximum(dynamic_freq, base + 10)  # Ensure we don't go below 110 Hz
-
+        #dynamic_freq = np.maximum(dynamic_freq, base + 10)  # Ensure we don't go below 110 Hz
         # Generate sound wave
-        out_audio = np.sin(2 * np.pi * np.cumsum(dynamic_freq) / self.audio_sampling_rate)
+        #out_audio = np.sin(2 * np.pi * np.cumsum(dynamic_freq / self.audio_sampling_rate))
+
+        #dynamic_freq = np.clip(dynamic_freq, base + 10, max)  # Keep in valid range
+        #dynamic_freq = np.power(dynamic_freq, 2)  # Exponentiate to amplify variations
+
+
+        # Compute instantaneous phase without cumulative smoothing
+        #phase = np.cumsum(2 * np.pi * dynamic_freq / self.audio_sampling_rate)
+        out_audio = np.sin(2 * np.pi * np.cumsum(dynamic_freq / self.audio_sampling_rate))
+        #out_audio = np.sin(phase)
+
         return out_audio
 
+    """
+        attempt at sonfificaton
+        the zero or no signal plays a low sound
+        changes in acceleration are mapped to higher frequencies 
+        there are ways to map but here it uses the max amplitude of the chunk
+        it could use the mean 
+        rate of change (this causes issues)
+
+    """
+
+    def sonify_signal(self, frames):
+        avg_amplitude = np.max(np.abs(self.audio_chunk))  # Use max amplitude instead of mean
+        #avg_amplitude = np.mean(np.abs(self.audio_chunk))
+        
+        #delta_signal = np.diff(self.audio_chunk) * self.audio_sampling_rate  # Scale by sample rate to get the rate of change
+
+        # Get the maximum rate of change (this could also be mean or some other statistic)
+        #max_change = np.max(np.abs(delta_signal))
+
+        # 100 is the base and 900 is the difference in the scale (1000 - 100)
+        # 100 shifts values to a minimum of 100 hz
+        # this can be experimented with
+        frequency = 100 + (avg_amplitude * 1800)  # Map amplitude to frequency range 100-1000 Hz
+
+        # Step 3: Generate sound for the entire chunk
+        time = np.arange(len(self.audio_chunk)) / self.audio_sampling_rate
+        output_signal = 0.1 * np.sin(2 * np.pi * frequency * time)
+
+        return output_signal
 
     # callback is called 
     def _audio_callback(self, outdata, frames, time, status):
@@ -61,13 +91,14 @@ class AudioProcessor(threading.Thread):
 
         # we will have a buffer on the queue
         while not self.data_queue.empty():
-            self.chunk = self.data_queue.get()
+            self.audio_chunk = self.data_queue.get()
 
-        if len(self.chunk) >= self.buffer_size:
+        if len(self.audio_chunk) >= self.buffer_size:
             
             #base max gamma use_quadratic use_log - note: quadratic doesnt seem as good
             # this is essentiall a frequency mapping on a base frequency
-            out_audio = self.sonify_signal(200, 1500, 0.5, False, False)
+            #out_audio = self.audify_signal(100, 1500, 0.5, False, False)
+            out_audio = self.sonify_signal( frames)
             # Send processed data to the output stream
             outdata[:len(out_audio)] = out_audio.reshape(-1, 1)
 
@@ -84,7 +115,7 @@ class AudioProcessor(threading.Thread):
         ):
             print("Playing stream in real-time. Press stop to end.")
             while self.running:
-                sd.sleep(500)  # Sleep for 0.5 second
+                sd.sleep(100)  # Sleep for 0.5 second
 
     def stop(self):
         self.running = False

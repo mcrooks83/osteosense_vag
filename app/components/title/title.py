@@ -5,7 +5,7 @@ class Title(Label):
         super().__init__(master, 
                          width=80, 
                          height=1, 
-                         pady=1, 
+                         pady=1 , 
                          bg='black', 
                          fg="#616CAB", 
                          text=text,  

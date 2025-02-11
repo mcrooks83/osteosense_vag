@@ -1,0 +1,9 @@
+# update this with latest packages used
+numpy
+matplotlib
+pandas
+numpy
+sounddevice
+pygame
+scipy
+dearpygui
