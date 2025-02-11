@@ -194,7 +194,9 @@ class App:
         """
 
         # start the stream
+        self.audio_processor.start()
         self.data_streamer.start()  # starts the stream
+        
 
         # test control window
         #with dpg.window(label="Control Window", width=-1, height=100, pos=(0, 10), no_move=True, no_resize=False, no_collapse=True):

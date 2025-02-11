@@ -203,6 +203,8 @@ class DataStreamer(threading.Thread):
                         #self.chunk = self.wavelet_denoise(self.chunk)
                         self.vag_signal_cb(self.chunk)
 
+                        self.audio_processor.data_queue.put(self.chunk)
+
                     # write data to csv if logging is set
                     # do this based on settings
                     # this is a slow and perhaps should be off loaded to a new thread?
