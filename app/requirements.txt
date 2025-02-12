@@ -1,5 +1,6 @@
 # update this with latest packages used
 tk
+customtkinter
 numpy
 matplotlib
 pandas

@@ -32,7 +32,7 @@ The sensor can operate in stream mode when connected to a usb port or via loggin
 [add images][add circuit digram][add code snippets to explain functionality]
 
 ## Software
-The inital software is a python tkinter desktop application
+The inital software is a python tkinter desktop application (not customertkinter)
 It allows two core views - stream and analyse. 
 It is curently developed and tested on Ubuntu / Windows and other platforms will be tested at a later date
 
@@ -45,15 +45,21 @@ Data stream includes both accleration and angular velocity
 WIP
 
 ### Modules
+- audio_processor
 - convert
 - data_reader
 - data_stream
 - serial_interface
 - processing_pipeline
+
 ### Settings
 [default settings for the application]
 ### Components
 [structure of the application in terms of views - canvas, stream, analyse]
+
+pyinstaller --onefile --add-data "requirements.txt;." --add-data "assets/boop.wav;assets" vibrosonix.py
+
+
 ### Notebooks
 
 NOTE: these are being added to all the time and not updated here.  Check them out!

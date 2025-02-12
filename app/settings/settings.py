@@ -1,7 +1,7 @@
 # app settings 
 # can be configured from the UI in a future update
 
-import os
+import os, sys
 
 class Settings:
     def __init__(self):
@@ -23,7 +23,14 @@ class Settings:
         self.conversion_16g = 0.000488
 
         # csv export directory
-        self.export_dir = "exports/"
+        if getattr(sys, 'frozen', False):  # If running as a frozen executable
+            base_path = os.path.dirname(sys.executable) 
+        else:
+            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Path to the root directory
+
+        # Define the path to the exports directory
+        self.export_dir = os.path.join(base_path, 'exports')
+        #self.export_dir = "exports/"
 
         # buffers
         self.BUFFER_SIZE = 4096
@@ -112,12 +119,17 @@ class Settings:
         self.sonify = value
 
     def make_dirs(self):
-        if not os.path.exists(self.export_dir):
-            os.mkdir(self.export_dir)
+        print(f"Making directories for exports at {self.export_dir}")
 
+        # Ensure the export directory exists
+        if not os.path.exists(self.export_dir):
+            os.makedirs(self.export_dir)  # Use makedirs to create any necessary parent directories
+
+        # Create the 'recordings' subfolder within exports
         log_dir = os.path.join(self.export_dir, "recordings")
         if not os.path.exists(log_dir):
-            os.mkdir(log_dir)
+            os.makedirs(log_dir)  # Use makedirs to ensure all intermediate folders are created
+
 
     def get_record(self):
         return self.record

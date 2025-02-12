@@ -65,9 +65,10 @@ class AnalyseFrame(CTkFrame):
         current_directory = os.getcwd()
         print(current_directory)
         parent = os.path.abspath(os.path.join(current_directory, os.pardir))
-        target_directory = os.path.join(parent, "app", "exports", "recordings") # change to exports only for test data
-        target_directory = os.path.normpath(target_directory)  # Normalize the path
-
+        
+        #target_directory = os.path.join(parent, "app", "exports", "recordings") # change to exports only for test data
+        #target_directory = os.path.normpath(target_directory)  # Normalize the path
+        target_directory = f"{self.s.get_export_dir()}/recordings/"
         csv_files = glob.glob(os.path.join(target_directory, '*.csv'))
         
         # make a function like usb ports
@@ -266,7 +267,7 @@ class AnalyseFrame(CTkFrame):
         #path = f"{self.s.get_export_dir()}{file}"
         path = f"{self.s.get_export_dir()}/recordings/{file}" #windows
         self.vag_df = pp.read_file(path)
-
+       
         x,y,z,a_mag = pp.extract_axes(self.vag_df)
         bp_filter_settings = self.s.get_filter_settings_for_bandpass()
         spectogram_settings = self.s.get_spectogram_settings()

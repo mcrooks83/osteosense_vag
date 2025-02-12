@@ -1,11 +1,17 @@
 import tkinter as tk
-import threading
 import pygame
 from customtkinter import CTkFrame, CTkCanvas
+import sys, os
 
 class LevelMeter(CTkFrame):
     def __init__(self, parent, settings, dot_fill_time=1000, click_interval=1000):
         super().__init__(parent)
+
+        if getattr(sys, 'frozen', False):  # Check if the app is frozen (running as an executable)
+            self.base_path = sys._MEIPASS  # If frozen, use the temporary folder where PyInstaller extracts the files
+        else:
+            self.base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # Go up two levels to the root directory
+
         
         pygame.mixer.init()
         self.s = settings
@@ -124,4 +130,5 @@ class LevelMeter(CTkFrame):
             
 
     def play_click(self):
-        pygame.mixer.Sound('boop.wav').play()
+        boop_wav_path = os.path.join(self.base_path, "assets", 'boop.wav')
+        pygame.mixer.Sound(boop_wav_path).play()
