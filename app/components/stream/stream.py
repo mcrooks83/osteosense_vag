@@ -28,22 +28,23 @@ class StreamFrame(CTkFrame):
         #self.configure(bg="black")
         self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=2)
         self.grid_columnconfigure(0, weight=1)
-
+        self.configure(fg_color="transparent")
         # Create a frame for operations and controls (buttons)
         #self.operations_frame = Frame(self, bg="black")
         self.operations_frame = CTkFrame(self, )
-        self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=2)
+        self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=2)
         self.operations_frame.grid_columnconfigure(0, weight=1)
         self.operations_frame.grid_rowconfigure(0, weight=1) # operations frame
         self.operations_frame.grid_rowconfigure(1, weight=1) # output frame
 
         # create a frame for the control buttons
-        self.ctl_buttons_frame = Frame(self.operations_frame, bg="black")
-        self.ctl_buttons_frame = CTkFrame(self.operations_frame, )
-        self.ctl_buttons_frame.grid(row=0, column=0, sticky="ew")
+        #self.ctl_buttons_frame = Frame(self.operations_frame, bg="black")
+        self.ctl_buttons_frame = CTkFrame(self.operations_frame, border_width=0 )
+        self.ctl_buttons_frame.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
 
         # Create a combobox for USB ports
         # Create a style for the Combobox
+        """
         style = Style()
         style.configure("TCombobox", 
                         fieldbackground="white",  # Background of the text field
@@ -56,6 +57,7 @@ class StreamFrame(CTkFrame):
                 foreground="#616CAB",       # Text color of list items
                 font=("Montserrat", 12, "bold")
                 )
+        """
 
         #self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[], style="TCombobox")
         self.usb_port_combo = CTkComboBox(self.ctl_buttons_frame, values=[], 
