@@ -130,7 +130,7 @@ class StreamFrame(Frame):
         self.z_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.mag_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
-        self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size())
+        self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size()*2)
         self.spectrograms = collections.deque(maxlen=10)  # Store a fixed number of spectrograms'
 
         # probably better in settings
@@ -314,7 +314,7 @@ class StreamFrame(Frame):
         selected_usb_port = self.usb_port_combo.get()
         self.s.set_usb_port(selected_usb_port)
         self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
-        self.serial_int.open_serial_port()
+        #self.serial_int.open_serial_port()
         message = f"GET_SENSOR_NAME 1\n"
         #self.sensor_name = self.serial_int.send_message(message, rsp=1)
         #self.sensor_name_label.configure(text=self.sensor_name)

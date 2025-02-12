@@ -21,7 +21,7 @@ class Settings:
 
         self.export_dir = "exports/"
 
-        self.BUFFER_SIZE = 10000
+        self.BUFFER_SIZE = 4096
 
         self.audio_buffer_size = 1024
 
