@@ -13,7 +13,7 @@ class AudioProcessor(threading.Thread):
         self.data_queue = queue.Queue()
         self.audio_buffer = []  # Buffer for storing magnitdue data
         self.running = False
-        self.audio_audio_chunk = []
+        self.audio_chunk = []
 
     def pink_noise(self, length, gain=0.1):
         uneven = length % 2

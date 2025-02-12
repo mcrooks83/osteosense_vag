@@ -15,6 +15,7 @@ import pywt
 class DataStreamer(threading.Thread):
     def __init__(self, settings,  conversion, frame_length, cb, vag_cb,  ser, gyr, audio_processor):
         super().__init__()
+        # all settings should use the settings class so that they can be configured from a settings window
         self.s = settings
         self.conversion = conversion
         self.frame_length = frame_length
@@ -81,8 +82,7 @@ class DataStreamer(threading.Thread):
 
     def compute_spectrogram(self, signal_data):
         #Compute the STFT (using scipy's stft function)
-        # get the samping rate from settings not hardcoded
-        f, t, Zxx = stft(signal_data, fs=3000, nperseg=self.segment_length,  noverlap=self.overlap)
+        f, t, Zxx = stft(signal_data, fs=self.s.get_sampling_rate(), nperseg=self.segment_length,  noverlap=self.overlap)
 
         # Convert the complex STFT to magnitude for the spectrogram
         Sxx = np.abs(Zxx)
@@ -164,6 +164,7 @@ class DataStreamer(threading.Thread):
                     # put raw data on UI
                     self.cb(acc_x, acc_y, acc_z, mag, self.row_count)
                     self.row_count = self.row_count + 1
+        
 
                     self.audio_buffer.append(mag)  # Store the sample in the buffer
 
@@ -173,7 +174,7 @@ class DataStreamer(threading.Thread):
 
                         # band pass filter
                         self.chunk = self.filter_input_stream(self.chunk) #* 10
-                        self.chunk = self.wavelet_denoise(self.chunk)
+                        #self.chunk = self.wavelet_denoise(self.chunk)
                         self.vag_cb(self.chunk)
 
                         # only do this is sonfiy is selected

@@ -21,9 +21,9 @@ class Settings:
 
         self.export_dir = "exports/"
 
-        self.BUFFER_SIZE = 10000
+        self.BUFFER_SIZE = 4096 # this is an optimal buffer size for general
 
-        self.audio_buffer_size = 1024
+        self.audio_buffer_size = 512 # previously 1024
 
         self.default_frame = 0 # 0 = stream, 1 = analyse
 

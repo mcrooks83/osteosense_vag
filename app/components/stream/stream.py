@@ -130,7 +130,7 @@ class StreamFrame(Frame):
         self.z_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.mag_data = collections.deque(maxlen=self.s.get_buffer_size())
         self.time_index = collections.deque(maxlen=self.s.get_buffer_size())
-        self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size())
+        self.vag_signal = collections.deque(maxlen=self.s.get_buffer_size()*2) # twice the buffer size so that we can compute a spectrogram
         self.spectrograms = collections.deque(maxlen=10)  # Store a fixed number of spectrograms'
 
         # probably better in settings
@@ -314,7 +314,7 @@ class StreamFrame(Frame):
         selected_usb_port = self.usb_port_combo.get()
         self.s.set_usb_port(selected_usb_port)
         self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
-        self.serial_int.open_serial_port()
+        #self.serial_int.open_serial_port()
         message = f"GET_SENSOR_NAME 1\n"
         #self.sensor_name = self.serial_int.send_message(message, rsp=1)
         #self.sensor_name_label.configure(text=self.sensor_name)
@@ -451,24 +451,10 @@ class StreamFrame(Frame):
         self.vag_signal.extend(vag)
         
         # compute spectogram 
-        if len(self.vag_signal) >= self.spec_data_size:
+        if len(self.vag_signal) >= self.spec_data_size: # spec_data_size is 8192 
             signal_data = np.array(self.vag_signal)[-self.spec_data_size:]
             spec_image = self.data_streamer.compute_spectrogram(signal_data)
             self.spectrograms.append(spec_image)
-
-    # make a callback - not used now as this is computed on a thread in data_streamer
-    def compute_spectrogram(self):
-        print("i am called but shouldnt be")
-        signal_data = np.array(self.vag_signal)[-self.spec_data_size:]
-
-        #Compute the STFT (using scipy's stft function)
-        f, t, Zxx = stft(signal_data, fs=3000, nperseg=self.segment_length,  noverlap=self.overlap)
-
-        # Convert the complex STFT to magnitude for the spectrogram
-        Sxx = np.abs(Zxx)
-
-        # Store the spectrogram in the deque (limit the number of stored spectrograms)
-        self.spectrograms.append((f, t, Sxx))
 
     def stream_data_callback(self, acc_x, acc_y, acc_z, mag, t_index):
         self.x_data.append(acc_x)

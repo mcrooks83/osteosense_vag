@@ -1,4 +1,5 @@
 
+### numpy issues
 
 # OsteoSense Vibroarthography
 
@@ -82,3 +83,9 @@ a set of notebooks for understanding and analyzing VAG signals.  These are all i
 3. recording is still a bit slow
 5. time axis of vag signal graph
 7. click to tag ML / L / Patella (get correct names)
+
+
+### numpy issues
+
+when running app (tkinter)
+pip install numpy=1.26.4 - downgrade from 2.2.2 (possibly installed with dearpygui)
