@@ -13,22 +13,30 @@ class Settings:
         #self.frame_length = 11 # bytes - should be 11 if only acceleration
         self.stream_frame_length = 8 # when streaming just acceleration
         
+        # controls
         self.sonify = 1 # sonfigy select
+        self.record = 0 #flag to set if recording
 
-
+        # conversions
         self.conversion_4g = 0.000122
         self.conversion_32g = 0.0009765625
         self.conversion_16g = 0.000488
 
+        # csv export directory
         self.export_dir = "exports/"
 
+        # buffers
         self.BUFFER_SIZE = 4096
-
         self.audio_buffer_size = 1024
 
+        # start with stream
         self.default_frame = 0 # 0 = stream, 1 = analyse
 
-        self.record = 0 #flag to set if recording
+        # protocol
+        self.half_cycle_time = 4 # seconds for half a cycle
+        
+        # audio mode
+        self.audio_mode = 1 # 1 is sonify and 0 is audify
 
         # filter settings 
         self.sampling_rate = 3000 # 3Khz
@@ -40,12 +48,24 @@ class Settings:
         # spectogram settings
         self.segment_length = 1024  # Length of each segment
         self.overlap = self.segment_length // 2  # 50% overlap
-        self.window = 'hann'
+        self.window = 'hann' # cannot modify this at the moment
         self.f_band1 = (50, 250)
         self.f_band2 = (250, 500)
 
         self.make_dirs()
 
+    def set_audio_mode(self, value):
+        self.audio_mode = value
+
+    def get_audio_mode(self):
+        return self.audio_mode
+    
+    def get_half_cycle_time(self):
+        return self.half_cycle_time
+    
+    def set_half_cycle_time(self, value):
+        self.half_cycle_time = value
+        
     def get_low_cut_off(self):
         return self.low_cut_off
     
@@ -108,6 +128,20 @@ class Settings:
     def get_test_file(self):
         return self.test_file
     
+    def set_spec_segment_length(self, value):
+        self.segment_length = value
+    
+    def get_spec_segment_length(self):
+        return self.segment_length
+    
+    def set_spec_overlap(self, value):
+        # // 2 is 50% // 4 25%
+        self.overlap = self.segment_length // value
+    
+    def get_spec_overlap(self):
+        return self.overlap
+
+    # this is used by analyse and is essentially the same settings as in streaming (currently)
     def get_spectogram_settings(self):
         spectogram_settings = {
             "segment_length" : self.segment_length,

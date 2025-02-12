@@ -58,8 +58,11 @@ class Canvas(CTkFrame):
         self.analyse_rb.grid(row=0,column=1,pady=5, sticky="w", padx=20 )
 
         self.settings_window = None
-        self.setting_btn = CTkButton(self.operations_frame, text="Change settings", command=self.open_settings_window)
+        self.setting_btn = CTkButton(self.operations_frame, text="Settings", command=self.open_settings_window)
         self.setting_btn.grid(row=0,column=2,pady=5, sticky="w", padx=20 )
+
+        self.sensor_status_label = CTkLabel(self.operations_frame, text="")
+        self.sensor_status_label.grid(row=0, column=4, padx=5, pady=2, sticky="w")
 
         # conditionally load the correct frame - for now this will always be stream but can be added back to play back previous recordings.
         
@@ -67,12 +70,23 @@ class Canvas(CTkFrame):
             self.stream_frame = StreamFrame(self, self.s) 
         else:
             self.analyse_frame = AnalyseFrame(self, self.s)
+    """
+    def sensor_status_cb(self, status):
+        if(status == True):
+            self.sensor_status_label.configure(text="connected")
+        else:
+            self.sensor_status_label.configure(text="not connected")
+    """
 
     def open_settings_window(self):
         if self.settings_window is None or not self.settings_window.winfo_exists():
             self.settings_window = sw.SettingsWindow(self, self.s)  # create window if its None or destroyed
-            self.settings_window.focus()  # if window exists focus it 
+            self.settings_window.lift()  # Bring the window to the front
+            self.settings_window.grab_set()  # Prevent interaction with other windows
+            #self.settings_window.focus()  # if window exists focus it 
         else:
+            self.settings_window.lift()  # Bring the window to the front
+            self.settings_window.grab_set()  # Prevent interaction with other windows
             self.settings_window.focus()  # if window exists focus it   
 
     def select_frame(self):

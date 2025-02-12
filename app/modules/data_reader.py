@@ -8,10 +8,10 @@ from datetime import datetime
 
 
 class DataReader():
-    def __init__(self, mount_point, frame_length, output_dir, cb):
+    def __init__(self,  output_dir, cb):
         super().__init__()
-        self.mount_point = mount_point
-        self.frame_length = frame_length
+        #self.mount_point = mount_point not use any more
+        #self.frame_length = frame_length
         self.output_file_name = f"{datetime.now().strftime('%d%m%Y%H%M')}"
         self.output_dir = output_dir
         self.cb = cb
@@ -40,6 +40,7 @@ class DataReader():
         return devices
 
     # this is used to read the data directly off the device (i.e its in logging mode )
+    """
     def poll_and_convert(self):
         try:
             # poll the mount_point until it is ready
@@ -64,14 +65,15 @@ class DataReader():
 
         except Exception as e:
             print(f"Error: {e}")   
+    """
     
     # this should be the primary function to read in a csv 
     # triggered by either clicking analyse from the stream screen or by selecting a new file 
     def load_csv(self):
         df = pd.read_csv(self.path_to_csv)
-        print(df.head(5))
 
     # these are devices that are already mounted
+    """
     def get_usb_mount_points(self):
         print("looking for devices")
         mount_points = []
@@ -86,6 +88,7 @@ class DataReader():
         except Exception as e:
             print(f"An error occurred: {e}")
         return mount_points
+    """
 
 
 

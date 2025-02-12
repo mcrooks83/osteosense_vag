@@ -20,8 +20,10 @@ from components.stream import dot_level_meter as lm
 class StreamFrame(CTkFrame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
-
         self.s = s  # settings
+        self.serial_port_status = False
+        self.master = master
+        self.master.sensor_status_label.configure(text="not connected", font=("Montserrat", 10, "bold"))
         print("record flag state:", self.s.get_record()) # state of record flag
         #self.configure(bg="black")
         self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=2)
@@ -110,7 +112,7 @@ class StreamFrame(CTkFrame):
             self.ctl_buttons_frame, 
             #borderwidth=0,             # Removes the border
             #highlightthickness=0,      # Removes the highlight border
-            text="sonify", 
+            text="Audio", 
             #bg="black", 
             #fg="white",          # Text color
             font=("Montserrat", 12, "bold"),  # Bold font 
@@ -160,7 +162,7 @@ class StreamFrame(CTkFrame):
         self.overlap = self.segment_length // 2  # 50% overlap
         self.im = None  # For storing the image object to update later
 
-        self.meter = lm.LevelMeter(self.operations_frame)
+        self.meter = lm.LevelMeter(self.operations_frame, self.s)
         self.meter.grid(row=2,column=0, padx=10, columnspan=999, pady=20, sticky="nsew")
 
         """
@@ -200,14 +202,36 @@ class StreamFrame(CTkFrame):
                                      )
         self.l_rb.grid(row=0,column=2,pady=2, sticky="w", padx=5)
         """
+        self.grid_rowconfigure(3, weight=1, minsize=200)  # Adjust minsize as needed for initial size
+
         self.output_frame = CTkFrame(self)
-        self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=2)
+        self.output_frame.grid(row=3, column=0, columnspan=1, rowspan=2, 
+                               sticky="nsew", padx=5, pady=2)
+        self.output_frame.grid_rowconfigure(0, weight=1)  # Make sure the canvas inside expands
         self.output_frame.grid_columnconfigure(0, weight=1)
+        
 
         # figures
         self.fig = Figure(facecolor='#292929') # gray16 like the theme
-        self.ax, self.ax1, self.ax2 = self.fig.subplots(nrows=1, ncols=3)
-        self.fig.subplots_adjust(wspace=0.5)  # Increase this value for more space
+        
+        
+        #self.ax, self.ax1, self.ax2 = self.fig.subplots(nrows=1, ncols=3)
+        #self.fig.subplots_adjust(wspace=0.5)
+        # Use gridspec to control the layout
+        #gs = self.fig.add_gridspec(2, 2)  # 2 rows, 2 columns
+        gs = self.fig.add_gridspec(2, 2, height_ratios=[2, 1])  # First row gets 2x the height of the second row
+
+
+        # Add subplots: 
+        # First row (2 subplots in the first row)
+        self.ax1= self.fig.add_subplot(gs[0, 0])  # First subplot
+        self.ax2 = self.fig.add_subplot(gs[0, 1])  # Second subplot
+
+        # Second row (1 subplot that spans the full width of the second row)
+        self.ax = self.fig.add_subplot(gs[1, :])  # Spans all 3 columns
+
+        # Adjust space between subplots
+        self.fig.subplots_adjust(wspace=0.5, hspace=0.5)  # Increase vertical space with hspace
 
         """
             code to rearrange the figures 
@@ -273,7 +297,7 @@ class StreamFrame(CTkFrame):
         self.ax2.tick_params(axis='y', colors='white')
 
         self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.output_frame)
-        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='new', padx=5, pady=2)
+        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='news', padx=5, pady=2)
 
         """
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self.output_frame)
@@ -335,14 +359,26 @@ class StreamFrame(CTkFrame):
         self.usb_port_combo.configure(values=list(set(usb_ports)))
         # Debug output for verification
         #print("USB ports added to combo box:", self.usb_port_combo['values'])
-            
+
+    def on_serial_port_status(self, status):
+        
+        self.serial_port_status = status  
+        if(self.serial_port_status == True):
+            print("should update label")
+            self.master.sensor_status_label.configure(text="connected", text_color="green", font=("Montserrat", 10, "bold"))
+        else:
+            self.master.sensor_status_label.configure(text="disconnected", font=("Montserrat", 10, "bold"))
     def on_usb_port_combo_select(self, event):
         print("combo selected")
         selected_usb_port = self.usb_port_combo.get()
         self.s.set_usb_port(selected_usb_port)
-        self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
+        self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate(), self.on_serial_port_status)
+        
         #self.serial_int.open_serial_port()
-        message = f"GET_SENSOR_NAME 1\n"
+        #self.serial_port_status = self.serial_int.get_status()
+        #print(f"serial port status {self.serial_int.get_status()}")
+        
+        #message = f"GET_SENSOR_NAME 1\n"
         #self.sensor_name = self.serial_int.send_message(message, rsp=1)
         #self.sensor_name_label.configure(text=self.sensor_name)
         self.start_button.configure(state=NORMAL)
@@ -507,6 +543,7 @@ class StreamFrame(CTkFrame):
     # animate functions that may be blocking.
     def animate(self, i, tx, accel_x, accel_y, accel_z, mag):
         self.ax.clear()
+        self.ax.set_title(f"3D Raw Acceleration", color="#3a7ebf")
         self.ax.plot(tx, accel_x, label="x accel", linewidth=1, color="#1C1F33")
         self.ax.plot(tx, accel_y, label="y accel", linewidth=1, color="#1BD3EA")
         self.ax.plot(tx, accel_z, label="z accel", linewidth=1, color="#616CAB")
@@ -516,6 +553,7 @@ class StreamFrame(CTkFrame):
 
     def animate1(self, i,  vag):
         self.ax1.clear()
+        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz", color="#3a7ebf")
         self.ax1.plot(vag, label="vag signal", linewidth=1, color="#1BD3EA")
         self.ax1.legend()
         self.ax1.set_ylim(-4, 4)

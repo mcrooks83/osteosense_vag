@@ -22,24 +22,18 @@ class DataStreamer(threading.Thread):
         self.running = True
         self.cb = cb # stream callback to display data
         self.vag_cb = vag_cb
-        #self.spec_cb = spec_cb
         self.row_count = 0
         self.gyr = gyr
         self.audio_processor = audio_processor # so we can put data on it
         self.audio_buffer = []  # Buffer for storing a chunk of vag data to pass to the audio_processor
         self.buffer_size = settings.get_audio_buffer_size()
-        # create a bandpass filter
+
+        # create a bandpass filter - potentiall want to do this on the fly
         filter_settings = self.s.get_filter_settings_for_bandpass()
         b, a = butter(filter_settings["filter_order"], [filter_settings["low_cut_off"], filter_settings["high_cut_off"]], btype='bandpass', fs=filter_settings["sampling_rate"])
         self.b = b
         self.a = a
         self.chunk = []
-        # spectrogram
-        # probably better in settings
-        self.spec_data_size = 8192  # a number of samples to compute the spectrogtam over in the streaming 
-        self.segment_length = 1024
-        self.hann_window = hann(self.segment_length)
-        self.overlap = self.segment_length // 2  # 50% overlap
 
         # Queue for CSV writing
         self.csv_queue = queue.Queue()
@@ -81,8 +75,8 @@ class DataStreamer(threading.Thread):
 
     def compute_spectrogram(self, signal_data):
         #Compute the STFT (using scipy's stft function)
-        # get the samping rate from settings not hardcoded
-        f, t, Zxx = stft(signal_data, fs=3000, nperseg=self.segment_length,  noverlap=self.overlap)
+        # defaults to hann window
+        f, t, Zxx = stft(signal_data, fs=self.s.get_sampling_rate(), nperseg=self.s.get_spec_segment_length(),  noverlap=self.s.get_spec_overlap())
 
         # Convert the complex STFT to magnitude for the spectrogram
         Sxx = np.abs(Zxx)
@@ -173,7 +167,7 @@ class DataStreamer(threading.Thread):
 
                         # band pass filter
                         self.chunk = self.filter_input_stream(self.chunk) #* 10
-                        self.chunk = self.wavelet_denoise(self.chunk)
+                        #self.chunk = self.wavelet_denoise(self.chunk)
                         self.vag_cb(self.chunk)
 
                         # only do this is sonfiy is selected

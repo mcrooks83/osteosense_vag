@@ -15,12 +15,14 @@ class AudioProcessor(threading.Thread):
         self.running = False
         self.audio_chunk = []
 
+    """
     def pink_noise(self, length, gain=0.1):
         uneven = length % 2
         X = np.random.randn(length // 2 + 1 + uneven) + 1j * np.random.randn(length // 2 + 1 + uneven)
         S = np.fft.irfft(X / np.sqrt(np.arange(len(X)) + 1))  # Pink noise spectrum
         S = np.real(S[:length])
         return S / np.max(np.abs(S)) * gain  # Normalize and scale
+    """
     
 
     ''' 
@@ -98,7 +100,12 @@ class AudioProcessor(threading.Thread):
             #base max gamma use_quadratic use_log - note: quadratic doesnt seem as good
             # this is essentiall a frequency mapping on a base frequency
             #out_audio = self.audify_signal(100, 1500, 0.5, False, False)
-            out_audio = self.sonify_signal( frames)
+
+            if(self.s.get_audio_mode() == 1):
+                out_audio = self.sonify_signal( frames)
+            else:
+                out_audio = self.audify_signal(100, 1500, 0.5, False, False)
+
             # Send processed data to the output stream
             outdata[:len(out_audio)] = out_audio.reshape(-1, 1)
 

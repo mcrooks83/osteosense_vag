@@ -21,7 +21,8 @@ class AnalyseFrame(CTkFrame):
         # set up a data reader (note: pass in the get_test_file)
 
         # the cb is to know if a file has been exported correctly (i.e read from the device.) - this will probably become redundant
-        self.data_reader = dr.DataReader(s.get_mount_path(), s.get_frame_length(), s.get_export_dir(), self.exported_data)
+        #self.data_reader = dr.DataReader(s.get_mount_path(), s.get_frame_length(), s.get_export_dir(), self.exported_data)
+        self.data_reader = dr.DataReader(s.get_export_dir(), self.exported_data)
 
         self.grid(row=1, column=0, sticky='news',padx=5,pady=5)
         self.grid_columnconfigure(0, weight=1)
@@ -154,21 +155,23 @@ class AnalyseFrame(CTkFrame):
         self.fig_canvas.get_tk_widget().grid(row=1, column=0, sticky='nsew', padx=5, pady=5)
 
         self.spectrogram_cb = None
-
+    """
     def read_device_data(self):
         #check there is a mount path first
         self.data_reader.poll_and_convert()
+    """
 
     def analyse(self):
         self.read_and_process_test_file(self.selected_file)
     
     def on_file_selected(self, event):
         self.selected_file = self.file_select.get()
-
+    """
     def get_usb_ports(self):
         mount_points = self.data_reader.get_usb_mount_points()
         for m in mount_points:
             self.usb_port_combo['values'] = (*self.usb_port_combo['values'], m)
+    """
             
     def on_usb_port_combo_select(self, event):
         selected_usb_port = self.usb_port_combo.get()

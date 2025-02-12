@@ -4,21 +4,19 @@ import pygame
 from customtkinter import CTkFrame, CTkCanvas
 
 class LevelMeter(CTkFrame):
-    def __init__(self, parent, dot_fill_time=1000, click_interval=1000):
+    def __init__(self, parent, settings, dot_fill_time=1000, click_interval=1000):
         super().__init__(parent)
         
         pygame.mixer.init()
-        #self.configure(bg="black")
-
-        self.dot_fill_time = dot_fill_time  # Time to fill each dot (ms)
-        self.click_interval = click_interval  # Time interval for click sound (ms)
+        self.s = settings
 
         self.num_dots = 4
+        self.dot_fill_time = int(self.s.get_half_cycle_time() * 1000 / self.num_dots)  # Time to fill each dot (ms)
+        
         self.current_dot = 0
         self.filling_phase = True  # Flag to track if we're filling or clearing the dots
-        self.timer_interval = dot_fill_time  # ms
 
-        self.canvas = CTkCanvas(self, height=40, bg="gray16", borderwidth=0, highlightthickness=0) #highlightthickness=0,bg="black")
+        self.canvas = CTkCanvas(self, height=150, width=1000, bg="gray16", borderwidth=0, highlightthickness=0) #highlightthickness=0,bg="black")
         self.canvas.pack()
 
         self.update_flag = False
@@ -34,17 +32,9 @@ class LevelMeter(CTkFrame):
         else:
             self.after(100, self.check_canvas_width)  # Check again after a short delay
 
-    def start_level_meter(self):
-        if self.level_meter_thread is None or not self.level_meter_thread.is_alive():
-            self.stop_flag = False
-            threading.Thread(target=self._beep_and_start_meter, daemon=True).start()
-
     def stop_level_meter(self):
         self.stop_flag = True
-        if self.level_meter_thread and self.level_meter_thread.is_alive():
-            self.level_meter_thread.join()
-
-        self.current_dot = 1
+        self.current_dot = 0
         self.update_flag = False
         self.draw_meter()  # Redraw the empty meter
 
@@ -80,11 +70,11 @@ class LevelMeter(CTkFrame):
                 self.filling_phase = True
 
         self.draw_meter()  # Draw the updated meter
-        self.after(1000, self.update_meter)  # Schedule the next update in 1 second
+        self.after(self.dot_fill_time, self.update_meter)  # Schedule the next update in 1 second
 
     def draw_meter(self):
         self.canvas.delete("all")
-        dot_radius = 10
+        dot_radius = 20
         dot_diameter = 2 * dot_radius
         canvas_width = self.canvas.winfo_width()
 
@@ -96,11 +86,42 @@ class LevelMeter(CTkFrame):
         # Calculate the start position to center the dots
         start_x = (canvas_width - total_width_needed) / 2
 
+        padding_top = 30  # Space above dots for label & arrow
+        arrow_y = padding_top  # Arrow and label position
+
+        # Define shorter arrow start and end positions
+        arrow_length = (self.num_dots - 1) * (dot_diameter)  # Reduce arrow length
+        arrow_start_x = start_x + (dot_diameter * 2)  # Shift start to center it better
+        arrow_end_x = arrow_start_x + arrow_length
+
+        # Draw label + forward arrow (extension: left to right)
+        if(self.filling_phase):
+            fill_color = "#3a7ebf"
+        else:
+            fill_color = "gray90"
+
+        self.canvas.create_text(arrow_start_x - 15, arrow_y, text="Extension", fill=fill_color, font=("Montserrat", 10, "bold"), anchor="e")
+        self.canvas.create_line(arrow_start_x, arrow_y, arrow_end_x, arrow_y, fill=fill_color, width=2, arrow=tk.LAST)
         # Draw the dots
+        dot_y = arrow_y + 20  # Move dots slightly lower
         for i in range(self.num_dots):
             color = "#3a7ebf" if i < self.current_dot else "gray20"
             x = start_x + i * (dot_diameter * 4)  # Position each dot
-            self.canvas.create_oval(x, 10, x + dot_diameter, 10 + dot_diameter, fill=color,outline="" )
+            self.canvas.create_oval(x, dot_y, x + dot_diameter, dot_y + dot_diameter, fill=color, outline="")
+
+        arrow_y_below = dot_y + dot_diameter + 30  # Adjusted position below dots
+        flexion_start_x = start_x + (self.num_dots - 1) * (dot_diameter * 4) -20 # Start at last dot
+        flexion_end_x = flexion_start_x - arrow_length  # Move backward
+
+        
+        if(self.filling_phase == False):
+            flex_fill_color = "#3a7ebf"
+        else:
+            flex_fill_color = "gray90"
+
+        self.canvas.create_text(flexion_start_x + 15, arrow_y_below, text="Flexion", fill=flex_fill_color, font=("Montserrat", 10, "bold"), anchor="w")
+        self.canvas.create_line(flexion_start_x, arrow_y_below, flexion_end_x, arrow_y_below, fill=flex_fill_color, width=2, arrow=tk.LAST)
+            
 
     def play_click(self):
         pygame.mixer.Sound('boop.wav').play()
