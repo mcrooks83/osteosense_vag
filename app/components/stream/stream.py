@@ -1,5 +1,9 @@
 from tkinter import  Frame, Button, NORMAL, DISABLED, IntVar, StringVar, Checkbutton, Radiobutton
 from tkinter.ttk import Combobox, Style
+
+from customtkinter import CTkFrame, CTkButton, NORMAL, DISABLED, IntVar, StringVar, CTkCheckBox, CTkRadioButton, CTkComboBox
+
+
 from matplotlib.pyplot import Figure
 import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
@@ -13,18 +17,19 @@ from scipy.signal import  stft
 from scipy.signal.windows import hann
 from components.stream import dot_level_meter as lm
 
-class StreamFrame(Frame):
+class StreamFrame(CTkFrame):
     def __init__(self, master, s, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
         self.s = s  # settings
         print("record flag state:", self.s.get_record()) # state of record flag
-        self.configure(bg="black")
+        #self.configure(bg="black")
         self.grid(row=1, column=0, rowspan=1, columnspan=1, sticky='news', padx=5, pady=2)
         self.grid_columnconfigure(0, weight=1)
 
         # Create a frame for operations and controls (buttons)
-        self.operations_frame = Frame(self, bg="black")
+        #self.operations_frame = Frame(self, bg="black")
+        self.operations_frame = CTkFrame(self, )
         self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=2)
         self.operations_frame.grid_columnconfigure(0, weight=1)
         self.operations_frame.grid_rowconfigure(0, weight=1) # operations frame
@@ -32,6 +37,7 @@ class StreamFrame(Frame):
 
         # create a frame for the control buttons
         self.ctl_buttons_frame = Frame(self.operations_frame, bg="black")
+        self.ctl_buttons_frame = CTkFrame(self.operations_frame, )
         self.ctl_buttons_frame.grid(row=0, column=0, sticky="ew")
 
         # Create a combobox for USB ports
@@ -49,54 +55,68 @@ class StreamFrame(Frame):
                 font=("Montserrat", 12, "bold")
                 )
 
-        self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[], style="TCombobox")
+        #self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[], style="TCombobox")
+        self.usb_port_combo = CTkComboBox(self.ctl_buttons_frame, values=[], 
+                                          dropdown_font=("Montserrat", 12, "bold"),
+                                          command=self.on_usb_port_combo_select
+                                        )
+        self.usb_port_combo.set("Select Port")
         #self.usb_port_combo = Combobox(self.ctl_buttons_frame, values=[])
         self.usb_port_combo.grid(row=0, column=0, padx=5, pady=2)
-        self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
+        #self.usb_port_combo.bind("<<ComboboxSelected>>", self.on_usb_port_combo_select)
         self.get_usb_ports()
 
         #self.sensor_name_label = Label(self.operations_frame, text="")
         #self.sensor_name_label.grid(row=0, column=1, padx=5, pady=2, sticky="w")
 
         # Start and Stop buttons
+        """
         self.poll_device = Button(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports(),
             borderwidth=0,             # Removes the border
             highlightthickness=0,      # Removes the highlight border  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
+        """
+        self.poll_device = CTkButton(self.ctl_buttons_frame, text="Find Device", command=lambda: self.get_usb_ports(),
+            border_width=0, 
+            corner_radius=10, 
+            anchor="center",           # Removes the border
+            #highlightthickness=0,      # Removes the highlight border  
+            font=("Montserrat", 12, "bold")  # Bold font 
+        )
         self.poll_device.grid(row=0, column=3, padx=5,  sticky="w")
-        self.poll_device.configure(bg="#1BD3EA", fg="white")
+        #self.poll_device.configure(bg="#1BD3EA", fg="white")
 
-        self.start_button = Button(self.ctl_buttons_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream(),
-            borderwidth=0,             # Removes the border
-            highlightthickness=0,      # Removes the highlight border  
+        self.start_button = CTkButton(self.ctl_buttons_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream(),
+            border_width=0, 
+            anchor="center", 
+            #highlightthickness=0,      # Removes the highlight border  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
         self.start_button.grid(row=0, column=4, padx=10, pady=2, sticky="e")
-        self.start_button.configure(bg="#616CAB", fg="white")
+        #self.start_button.configure(bg="#616CAB", fg="white")
 
-        self.stop_button = Button(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream(), 
-            borderwidth=0,             # Removes the border
-            highlightthickness=0,      # Removes the highlight border  
+        self.stop_button = CTkButton(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream(), 
+            border_width=0,             # Removes the border
             font=("Montserrat", 12, "bold")  # Bold font 
         )
         self.stop_button.grid(row=0, column=5, padx=10, pady=2, sticky="e")
-        self.stop_button.configure(bg="#F3F2F7", fg="#5A72ED")
+        #self.stop_button.configure(bg="#F3F2F7", fg="#5A72ED")
 
         self.sonify_var = IntVar(value=1)
 
          # starts on and if it is off there is no audio processed
-        self.sonify_rb = Checkbutton(
+        self.sonify_rb = CTkCheckBox(
             self.ctl_buttons_frame, 
-            borderwidth=0,             # Removes the border
-            highlightthickness=0,      # Removes the highlight border
+            #borderwidth=0,             # Removes the border
+            #highlightthickness=0,      # Removes the highlight border
             text="sonify", 
-            bg="black", 
-            fg="white",          # Text color
+            #bg="black", 
+            #fg="white",          # Text color
             font=("Montserrat", 12, "bold"),  # Bold font 
-            activebackground="black",  # Prevents gray background on hover
-            activeforeground="white",  # Keeps text white on hover
-            selectcolor="#616CAB",  # Checkbox background color when selected
+            #activebackground="black",  # Prevents gray background on hover
+            #activeforeground="white",  # Keeps text white on hover
+            #selectcolor="#616CAB",  # Checkbox background color when selected
             onvalue=1, 
             offvalue=0, 
             variable=self.sonify_var, 
@@ -107,16 +127,16 @@ class StreamFrame(Frame):
         self.record_var = IntVar(value=self.s.get_record())
         
         # this will be used to record - it should record the VAG signal rather than the raw data set    
-        self.record_cb = Checkbutton(self.ctl_buttons_frame, 
-                                   borderwidth=0,             # Removes the border
-            highlightthickness=0,      # Removes the highlight border
+        self.record_cb = CTkCheckBox(self.ctl_buttons_frame, 
+            #border_width=0,             # Removes the border
+            #highlightthickness=0,      # Removes the highlight border
             text="record", 
-            bg="black", 
-            fg="white",          # Text color
+            #bg="black", 
+            #fg="white",          # Text color
             font=("Montserrat", 12, "bold"),  # Bold font 
-            activebackground="black",  # Prevents gray background on hover
-            activeforeground="white",  # Keeps text white on hover
-            selectcolor="#616CAB",  # Checkbox background color when selected
+            #activebackground="black",  # Prevents gray background on hover
+            #activeforeground="white",  # Keeps text white on hover
+            #selectcolor="#616CAB",  # Checkbox background color when selected
             onvalue=1, offvalue=0, variable=self.record_var, command=self.set_record)
         self.record_cb.grid(row=0, column=7, padx=10, pady=2, sticky="e")
 
@@ -175,17 +195,17 @@ class StreamFrame(Frame):
                                      font=("Montserrat", 14), 
                                      selectcolor="#616CAB",
                                      anchor="w", 
-                                     borderwidth=0,             # Removes the border
+                                     borderwidth=0,             # Removes the bordr
                                      highlightthickness=0,      # Removes the highlight border  
                                      )
         self.l_rb.grid(row=0,column=2,pady=2, sticky="w", padx=5)
         """
-        self.output_frame = Frame(self, bg="black")
+        self.output_frame = CTkFrame(self)
         self.output_frame.grid(row=3, column=0, columnspan=1, sticky="nsew", padx=5, pady=2)
         self.output_frame.grid_columnconfigure(0, weight=1)
 
         # figures
-        self.fig = Figure(facecolor='black')
+        self.fig = Figure(facecolor='#292929') # gray16 like the theme
         self.ax, self.ax1, self.ax2 = self.fig.subplots(nrows=1, ncols=3)
         self.fig.subplots_adjust(wspace=0.5)  # Increase this value for more space
 
@@ -204,11 +224,13 @@ class StreamFrame(Frame):
 
         # Acceleration Graph
         #""""
-        self.ax.set_title(f"3D Raw Acceleration", color="white")
+        self.ax.set_title(f"3D Raw Acceleration", color="#3a7ebf")
         self.ax.set_ylim(-6, 6)
-        self.ax.set_facecolor("black")
+        self.ax.set_facecolor("#292929")
         self.ax.spines['bottom'].set_color('white')
         self.ax.spines['left'].set_color('white')
+        self.ax.spines['top'].set_color("none")
+        self.ax.spines['right'].set_color('none')
         self.ax.set_xlabel("packet count", fontsize=10, color="white")
         self.ax.set_ylabel("acceleration (g)", fontsize=10, color="white")
         self.ax.xaxis.set_ticks_position('bottom')
@@ -220,12 +242,14 @@ class StreamFrame(Frame):
         
         #"""
         # Vag signal
-        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz")
+        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz", color="#3a7ebf")
         self.ax1.set_ylim(-2, 2)
         self.ax1.autoscale(True)
-        self.ax1.set_facecolor("black")
+        self.ax1.set_facecolor("#292929")
         self.ax1.spines['bottom'].set_color('white')
         self.ax1.spines['left'].set_color('white')
+        self.ax1.spines['top'].set_color("none")
+        self.ax1.spines['right'].set_color('none')
         self.ax1.set_xlabel("time", fontsize=10, color="white")
         self.ax1.set_ylabel("acceleration (g)", fontsize=10, color="white")
         self.ax1.xaxis.set_ticks_position('bottom')
@@ -235,10 +259,12 @@ class StreamFrame(Frame):
         self.ax1.grid(False)
 
         # power spectrum
-        self.ax2.set_title(f"VAG Spectrum")
-        self.ax2.set_facecolor("black")
+        self.ax2.set_title(f"VAG Spectrum", color="#3a7ebf")
+        self.ax2.set_facecolor("#292929")
         self.ax2.spines['bottom'].set_color('white')
         self.ax2.spines['left'].set_color('white')
+        self.ax2.spines['top'].set_color("none")
+        self.ax2.spines['right'].set_color('none')
         self.ax2.set_xlabel("time", fontsize=10, color="white")
         self.ax2.set_ylabel("PSD", fontsize=10, color="white")
         self.ax2.xaxis.set_ticks_position('bottom')
@@ -305,12 +331,13 @@ class StreamFrame(Frame):
                 usb_ports.append(port.device)
 
         # Remove duplicates and update the combo box
-        self.usb_port_combo['values'] = list(set(usb_ports))
-
+        #self.usb_port_combo['values'] = list(set(usb_ports))
+        self.usb_port_combo.configure(values=list(set(usb_ports)))
         # Debug output for verification
-        print("USB ports added to combo box:", self.usb_port_combo['values'])
+        #print("USB ports added to combo box:", self.usb_port_combo['values'])
             
     def on_usb_port_combo_select(self, event):
+        print("combo selected")
         selected_usb_port = self.usb_port_combo.get()
         self.s.set_usb_port(selected_usb_port)
         self.serial_int = si.SerialInterface(selected_usb_port, self.s.get_baud_rate())
@@ -318,7 +345,7 @@ class StreamFrame(Frame):
         message = f"GET_SENSOR_NAME 1\n"
         #self.sensor_name = self.serial_int.send_message(message, rsp=1)
         #self.sensor_name_label.configure(text=self.sensor_name)
-        self.start_button.config(state=NORMAL)
+        self.start_button.configure(state=NORMAL)
 
     def reset_buffers(self):
         self.time_index.clear()
@@ -399,7 +426,7 @@ class StreamFrame(Frame):
         return "No animation to stop"
     
     def start_stream(self):
-        self.start_button.config(state=DISABLED)
+        self.start_button.configure(state=DISABLED)
         
         message = f"START_STREAM 1\n"
         #self.serial_int.send_message(message)
@@ -435,7 +462,7 @@ class StreamFrame(Frame):
             res = self.start_animation()
 
     def stop_stream(self):
-        self.start_button.config(state=NORMAL)
+        self.start_button.configure(state=NORMAL)
         if(self.s.get_sonify_select()==1): 
             self.audio_processor.stop()
             self.audio_processor.join()

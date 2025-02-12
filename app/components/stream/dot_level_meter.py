@@ -1,14 +1,14 @@
 import tkinter as tk
 import threading
-import time
 import pygame
+from customtkinter import CTkFrame, CTkCanvas
 
-class LevelMeter(tk.Frame):
+class LevelMeter(CTkFrame):
     def __init__(self, parent, dot_fill_time=1000, click_interval=1000):
         super().__init__(parent)
         
         pygame.mixer.init()
-        self.configure(bg="black")
+        #self.configure(bg="black")
 
         self.dot_fill_time = dot_fill_time  # Time to fill each dot (ms)
         self.click_interval = click_interval  # Time interval for click sound (ms)
@@ -18,7 +18,7 @@ class LevelMeter(tk.Frame):
         self.filling_phase = True  # Flag to track if we're filling or clearing the dots
         self.timer_interval = dot_fill_time  # ms
 
-        self.canvas = tk.Canvas(self, height=40, highlightthickness=0,bg="black")
+        self.canvas = CTkCanvas(self, height=40, bg="gray16", borderwidth=0, highlightthickness=0) #highlightthickness=0,bg="black")
         self.canvas.pack()
 
         self.update_flag = False
@@ -98,9 +98,9 @@ class LevelMeter(tk.Frame):
 
         # Draw the dots
         for i in range(self.num_dots):
-            color = "#616CAB" if i < self.current_dot else "white"
+            color = "#3a7ebf" if i < self.current_dot else "gray20"
             x = start_x + i * (dot_diameter * 4)  # Position each dot
-            self.canvas.create_oval(x, 10, x + dot_diameter, 10 + dot_diameter, fill=color)
+            self.canvas.create_oval(x, 10, x + dot_diameter, 10 + dot_diameter, fill=color,outline="" )
 
     def play_click(self):
         pygame.mixer.Sound('boop.wav').play()

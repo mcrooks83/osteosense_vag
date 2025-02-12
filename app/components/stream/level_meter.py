@@ -1,18 +1,14 @@
 import tkinter as tk
 import threading
 import time
-import sys
 import pygame
 
-import tkinter as tk
-import threading
-import time
-import pygame
+from customtkinter import CTkFrame, CTkCanvas
 
 
-class LevelMeter(tk.Frame):
+class LevelMeter(CTkFrame):
     def __init__(self, parent, block_fill_time=4000, click_interval=1000):
-        super().__init__(parent, bg='darkgrey')
+        super().__init__(parent)
 
         pygame.mixer.init()
 
@@ -27,7 +23,7 @@ class LevelMeter(tk.Frame):
         self.step_size = 1.0 / self.total_updates
         self.counter = 0  # Click sound timer
 
-        self.canvas = tk.Canvas(self, height=40, bg='darkgrey', highlightthickness=0)
+        self.canvas = CTkCanvas(self, height=40) # highlightthickness=0)
         self.canvas.pack(expand=True, fill='both')
 
         self.update_flag = False

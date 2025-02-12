@@ -1,13 +1,15 @@
-from tkinter import Label, CENTER
+#from tkinter import Label, CENTER
+from customtkinter import CTkLabel, CENTER
 
-class Title(Label):
+class Title(CTkLabel):
     def __init__(self, master, text, *args, **kwargs):
         super().__init__(master, 
                          width=80, 
-                         height=1, 
+                         height=50, 
                          pady=1, 
-                         bg='black', 
-                         fg="#616CAB", 
+                         bg_color='black', 
+                         #fg_color="#616CAB", 
+                         fg_color= "#3a7ebf", # inkeeping with the theme
                          text=text,  
                          font=("Montserrat", 20, "bold"),  # Bold font 
                          anchor=CENTER, 

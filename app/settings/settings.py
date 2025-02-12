@@ -6,14 +6,15 @@ import os
 class Settings:
     def __init__(self):
 
-        self.test_file = "TT_test_1.csv"
-        self.usb_port = "/dev/ttyACM0"
-        self.mount_path = "/media/mike/641A-F4BD"
+        #self.test_file = "TT_test_1.csv"
+        #self.usb_port = "/dev/ttyACM0"
+        #self.mount_path = "/media/mike/641A-F4BD"
         self.baud_rate = 256000
-        self.frame_length = 11 # bytes - should be 11 if only acceleration
+        #self.frame_length = 11 # bytes - should be 11 if only acceleration
         self.stream_frame_length = 8 # when streaming just acceleration
+        
         self.sonify = 1 # sonfigy select
-        #self.g_level = 9.8
+
 
         self.conversion_4g = 0.000122
         self.conversion_32g = 0.0009765625
@@ -32,8 +33,6 @@ class Settings:
         # filter settings 
         self.sampling_rate = 3000 # 3Khz
         self.filter_type = "bandpass" # high
-
-        # these could be settable in the UI
         self.low_cut_off = 100 # removes muscle artifacts and baseline wander
         self.high_cut_off = 1000  # 
         self.filter_order = 4   # 9th order has been used in literature?
@@ -46,6 +45,24 @@ class Settings:
         self.f_band2 = (250, 500)
 
         self.make_dirs()
+
+    def get_low_cut_off(self):
+        return self.low_cut_off
+    
+    def set_low_cut_off(self, low_value):
+        self.low_cut_off = low_value
+
+    def get_high_cut_off(self):
+        return self.high_cut_off
+    
+    def set_high_cut_off(self, high_value):
+        self.high_cut_off = high_value
+    
+    def get_filter_order(self):
+        return self.filter_order
+    
+    def set_filter_order(self, value):
+        self.filter_order = value
 
     def get_audio_buffer_size(self):
         return self.audio_buffer_size
