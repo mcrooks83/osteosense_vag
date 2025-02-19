@@ -22,6 +22,13 @@ class Settings:
         self.conversion_32g = 0.0009765625
         self.conversion_16g = 0.000488
 
+        # assets directory
+        if getattr(sys, 'frozen', False):  # Check if the app is frozen (running as an executable)
+            base_path = sys._MEIPASS  # If frozen, use the temporary folder where PyInstaller extracts the files
+        else:
+            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Go up to the root directory
+        self.assets_dir = os.path.join(base_path, 'assets')
+
         # csv export directory
         if getattr(sys, 'frozen', False):  # If running as a frozen executable
             base_path = os.path.dirname(sys.executable) 
@@ -210,6 +217,9 @@ class Settings:
     
     def get_export_dir(self):
         return self.export_dir
+    
+    def get_assets_dir(self):
+        return self.assets_dir
     
     def get_buffer_size(self):
         return self.BUFFER_SIZE

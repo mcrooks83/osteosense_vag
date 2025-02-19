@@ -7,6 +7,7 @@ class LevelMeter(CTkFrame):
     def __init__(self, parent, settings, dot_fill_time=1000, click_interval=1000):
         super().__init__(parent)
 
+        # this can be moved to settings
         if getattr(sys, 'frozen', False):  # Check if the app is frozen (running as an executable)
             self.base_path = sys._MEIPASS  # If frozen, use the temporary folder where PyInstaller extracts the files
         else:

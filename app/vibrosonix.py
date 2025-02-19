@@ -6,6 +6,7 @@ from tkinter import Tk
 #from classes.Config import Config
 from components.title import title as t
 from components.canvas import canvas as c
+from components.footer import footer as f
 #from classes.LocalSensorManager import LocalSensorManager
 from settings import settings as s
 import os, sys
@@ -22,14 +23,14 @@ class MainApplication(ctk.CTk):
         self.width = Tk.winfo_screenwidth(self)
         self.height = Tk.winfo_screenheight(self)
         self.geometry(f"{self.width}x{self.height}")
-        self.state("normal")
+        #self.state("normal")
         '''
         if(sys.platform == "linux"):
             self.state("normal")
         else:
             self.state("zoomed")
         '''
-        self.title("A Right Step Health & TalTech Collaboration")
+        #self.title("A Right Step Health & TalTech Collaboration")
         
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -40,6 +41,9 @@ class MainApplication(ctk.CTk):
         
         self.canvas = c.Canvas(self, settings)
         self.title_label = t.Title(self, text="OSTEOSENSE VIBROSONIX")
+        self.footer = f.Footer(self, logo1_path=os.path.join(settings.get_assets_dir(), "osteosense_logo.png"),
+                               logo2_path=os.path.join(settings.get_assets_dir(), "taltech_logo.png"),
+                               logo3_path=os.path.join(settings.get_assets_dir(), "heart1.png"))
 
         
 def on_menu_select(self):

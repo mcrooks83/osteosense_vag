@@ -57,7 +57,8 @@ WIP
 ### Components
 [structure of the application in terms of views - canvas, stream, analyse]
 
-pyinstaller --onefile --add-data "requirements.txt;." --add-data "assets/boop.wav;assets" vibrosonix.py
+### build the .exe
+pyinstaller --onefile --add-data "requirements.txt;." --add-data "assets/boop.wav;assets" --add-data "assets/osteosense_logo.png;assets" --add-data "assets/taltech_logo.png;assets" --add-data "assets/heart1.png;assets" vibrosonix.py
 
 
 ### Notebooks
