@@ -4,30 +4,18 @@ import sounddevice as sd
 import threading
 import queue # used to recieve data from the stream
 
-class AudioProcessor(threading.Thread):
+class AudioProcessor():
     def __init__(self, settings):
         super().__init__()
         self.s = settings
         self.audio_sampling_rate=3000  # same as sampling rate for the sensor
-        self.buffer_size = settings.get_audio_buffer_size()
+        self.buffer_size = settings.get_audio_buffer_size() # 1024
         self.data_queue = queue.Queue()
         self.audio_buffer = []  # Buffer for storing magnitdue data
         self.running = False
         self.audio_chunk = []
+        self.audio_thread = None
 
-    """
-    def pink_noise(self, length, gain=0.1):
-        uneven = length % 2
-        X = np.random.randn(length // 2 + 1 + uneven) + 1j * np.random.randn(length // 2 + 1 + uneven)
-        S = np.fft.irfft(X / np.sqrt(np.arange(len(X)) + 1))  # Pink noise spectrum
-        S = np.real(S[:length])
-        return S / np.max(np.abs(S)) * gain  # Normalize and scale
-    """
-    
-
-    ''' 
-       an attempt at audification 
-    '''
     def audify_signal(self, base, max, gamma, use_quadratic=False, use_log=False):
         # new attempt to play actual sounds
         self.audio_audio_chunk = np.abs(self.audio_chunk)
@@ -109,11 +97,23 @@ class AudioProcessor(threading.Thread):
             # Send processed data to the output stream
             outdata[:len(out_audio)] = out_audio.reshape(-1, 1)
 
+    def start_audio_thread(self):
+        print("audio thread starting")
+        self.running=True
+        self.audio_thread = threading.Thread(target=self.stream_audio, daemon=True)
+        self.audio_thread.start()
 
-    def run(self):
-        print("audio running")
+    def stop_audio_thread(self):
+        print(f"in stop audio {self.audio_thread.is_alive()}")
+        if self.audio_thread.is_alive():
+            self.running = False
+            self.audio_thread.join()
+            self.audio_thread = None
+        print("data stream thread stopped")
+
+
+    def stream_audio(self):
         """Start audio processing in a separate thread."""
-        self.running = True
         with sd.OutputStream(
             samplerate=self.audio_sampling_rate,
             blocksize=self.buffer_size,

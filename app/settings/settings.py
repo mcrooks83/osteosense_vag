@@ -12,6 +12,9 @@ class Settings:
         self.baud_rate = 256000
         #self.frame_length = 11 # bytes - should be 11 if only acceleration
         self.stream_frame_length = 8 # when streaming just acceleration
+
+        # adapters
+        self.adapter = 0 #serial = 0, ble = 1 - will default the other way
         
         # controls
         self.sonify = 1 # sonfigy select
@@ -40,7 +43,7 @@ class Settings:
         #self.export_dir = "exports/"
 
         # buffers
-        self.BUFFER_SIZE = 4096
+        self.BUFFER_SIZE = 4096 # this is how much data to keep in buffers on UI 
         self.audio_buffer_size = 1024
 
         # start with stream
@@ -60,13 +63,20 @@ class Settings:
         self.filter_order = 4   # 9th order has been used in literature?
 
         # spectogram settings
-        self.segment_length = 1024  # Length of each segment
+        self.segment_length = 1024  # Length of each segment 
+        self.spec_data_size = 8192
         self.overlap = self.segment_length // 2  # 50% overlap
         self.window = 'hann' # cannot modify this at the moment
         self.f_band1 = (50, 250)
         self.f_band2 = (250, 500)
 
         self.make_dirs()
+
+    def get_adpater(self):
+        return self.adapter
+    
+    def set_adapter(self, value):
+        self.adapter = value
 
     def set_audio_mode(self, value):
         self.audio_mode = value
@@ -146,6 +156,9 @@ class Settings:
         
     def get_test_file(self):
         return self.test_file
+    
+    def get_spec_size(self):
+        return self.spec_data_size
     
     def set_spec_segment_length(self, value):
         self.segment_length = value

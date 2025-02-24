@@ -30,7 +30,7 @@ class MainApplication(ctk.CTk):
         else:
             self.state("zoomed")
         '''
-        #self.title("A Right Step Health & TalTech Collaboration")
+        self.title("")
         
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
