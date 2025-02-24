@@ -1,4 +1,4 @@
-from customtkinter import CTkFrame, CTkButton, NORMAL, DISABLED, IntVar, StringVar, CTkCheckBox, CTkRadioButton, CTkComboBox
+from customtkinter import CTkFrame, CTkButton, NORMAL, DISABLED, IntVar, CTkCheckBox, CTkComboBox
 
 from matplotlib.pyplot import Figure
 import matplotlib.animation as animation
@@ -6,8 +6,6 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
 import collections
 from modules import data_streamer as ds
 import serial.tools.list_ports
-import numpy as np
-from scipy.signal.windows import hann
 from components.stream import dot_level_meter as lm
 from modules import events as e
 
@@ -20,13 +18,11 @@ class StreamFrame(CTkFrame):
         # create a data streamer
         self.data_streamer = ds.DataStreamer(self.s)
        
-
         # register listeners - NOTE: listeners could be associted to the same event like subscribing 
         self.data_streamer.add_listener(e.EventName.SENSOR_PACKET, self.on_sensor_packet)
         self.data_streamer.add_listener(e.EventName.VAG_BLOCK,  self.on_vag_block)
         self.data_streamer.add_listener(e.EventName.SPEC_IMG, self.on_spectrogram)
         self.data_streamer.add_listener(e.EventName.ADAPTER_STATUS, self.on_adapter_status)
-
 
         self.adapter_status = False
    
@@ -59,8 +55,7 @@ class StreamFrame(CTkFrame):
         self.poll_device = CTkButton(self.ctl_buttons_frame, text="Find Device", command=lambda: self.scan_usb_ports(),
             border_width=0, 
             corner_radius=10, 
-            anchor="center",           # Removes the border
-            #highlightthickness=0,      # Removes the highlight border  
+            anchor="center",           # Removes the border 
             font=("Montserrat", 12, "bold")  # Bold font 
         )
         self.poll_device.grid(row=0, column=3, padx=5,  sticky="w")
@@ -68,19 +63,16 @@ class StreamFrame(CTkFrame):
 
         self.start_button = CTkButton(self.ctl_buttons_frame, text="Start Streaming", state=DISABLED, command=lambda: self.start_stream(),
             border_width=0, 
-            anchor="center", 
-            #highlightthickness=0,      # Removes the highlight border  
+            anchor="center",  
             font=("Montserrat", 12, "bold")  # Bold font 
         )
         self.start_button.grid(row=0, column=4, padx=10, pady=2, sticky="e")
-        #self.start_button.configure(bg="#616CAB", fg="white")
 
         self.stop_button = CTkButton(self.ctl_buttons_frame, text="Stop Streaming", command=lambda: self.stop_stream(), 
             border_width=0,             # Removes the border
             font=("Montserrat", 12, "bold")  # Bold font 
         )
         self.stop_button.grid(row=0, column=5, padx=10, pady=2, sticky="e")
-        #self.stop_button.configure(bg="#F3F2F7", fg="#5A72ED")
 
         self.sonify_var = IntVar(value=1)
 
