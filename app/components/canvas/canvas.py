@@ -10,16 +10,15 @@ class Canvas(CTkFrame):
         super().__init__(master, *args, **kwargs)
 
         self.s = settings
-       
-        #self.configure(bg="black")
-        self.grid(row=1, column=0,rowspan=1,columnspan=1, sticky='news',padx=5,pady=5)
+
+        self.grid(row=1, column=0,rowspan=1,columnspan=1, sticky='news',padx=10,pady=10)
 
         # makes the column and row in this widget expandable
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
         self.operations_frame = CTkFrame(self)
-        self.operations_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=5, pady=10)
+        self.operations_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
 
         self.stream_var = IntVar()
 
@@ -32,15 +31,8 @@ class Canvas(CTkFrame):
                                      #selectcolor="#616CAB",
                                      #anchor="w", 
                                      )
-        """
-        self.stream_rb = Radiobutton(self.operations_frame, text="Stream", value=0, variable = self.stream_var, 
-                                     command=self.select_frame, bg="black", fg="white",
-                                     font=("Montserrat", 14), 
-                                     selectcolor="#616CAB",
-                                     anchor="w", 
-                                     )
-        """
-        self.stream_rb.grid(row=0,column=0,pady=5, sticky="w", padx=20)
+        self.stream_rb.grid(row=0,column=0,pady=5, sticky="w", padx=10)
+
         self.analyse_rb = CTkRadioButton(self.operations_frame, text="Analyse", value=1, variable = self.stream_var, 
                                       command=self.select_frame, 
                                       font=("Montserrat", 14), 
@@ -90,10 +82,15 @@ class Canvas(CTkFrame):
             self.settings_window.focus()  # if window exists focus it   
 
     def select_frame(self):
-        if(self.stream_var.get() == 0):
-            self.analyse_frame.grid_forget() # deletes the frame
-            self.stream_frame = StreamFrame(self, self.s) 
-        elif(self.stream_var.get() == 1):
-            self.stream_frame.grid_forget()
+    # Check if analyse_frame exists and is gridded before calling grid_forget
+        if self.stream_var.get() == 0:
+            if hasattr(self, 'analyse_frame') and self.analyse_frame.winfo_ismapped():
+                self.analyse_frame.grid_forget()  # Deletes the frame if it exists
+            self.stream_frame = StreamFrame(self, self.s)
+
+        # Check if stream_frame exists and is gridded before calling grid_forget
+        elif self.stream_var.get() == 1:
+            if hasattr(self, 'stream_frame') and self.stream_frame.winfo_ismapped():
+                self.stream_frame.grid_forget()
             self.analyse_frame = AnalyseFrame(self, self.s)
 

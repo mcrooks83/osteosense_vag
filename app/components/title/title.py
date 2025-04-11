@@ -5,7 +5,7 @@ class Title(CTkLabel):
     def __init__(self, master, text, *args, **kwargs):
         super().__init__(master, 
                          width=80, 
-                         height=50, 
+                         height=40, 
                          pady=1, 
                          bg_color='black', 
                          #fg_color="#616CAB", 

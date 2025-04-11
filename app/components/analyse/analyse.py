@@ -73,16 +73,24 @@ class AnalyseFrame(CTkFrame):
         
         # make a function like usb ports
         file_list = []
-        for f in csv_files:
-            if(sys.platform == "linux"):
-                self.file_select['values'] = (*self.file_select['values'], f.split('/')[-1])
-            else: # assume windows for now
+        file_names = []
+
+        # Check platform and update combobox with file names
+        if sys.platform == "linux":
+            for f in csv_files:
+                file_names.append(f.split('/')[-1])  # Add the file name (without path)
+
+            # Update the combobox by setting the file names
+            # The set method in CTkComboBox doesn't directly accept a list of options, 
+            # so we manually update it via `set()` or handle items dynamically
+            self.file_select.set(file_names)  # Update the combobox with new file names
+        else: # assume windows for now
                 #self.usb_port_combo.configure(values=list(set(usb_ports)))
                 f = f.split('\\')[-1]
                 file_list.append(f)
                 
                 #self.file_select['values'] = (*self.file_select['values'], f.split('\\')[-1])
-        self.file_select.configure(values=file_list)
+        self.file_select.configure(values=file_names)
         #self.selected_file = csv_files[0].split('\\')[-1]
         self.analyse_button = CTkButton(self.operations_frame, text="Analyse", command= lambda: self.analyse(),
                                         font=("Montserrat", 12, "bold"))
@@ -121,7 +129,7 @@ class AnalyseFrame(CTkFrame):
         self.fig.subplots_adjust(hspace=1)  # Increase this value for more space
 
         # Configure first subplot (Frequency Band Power Contribution)
-        self.f_ax.set_title("Frequency Band Power Contribution",  color="#3a7ebf")
+        self.f_ax.set_title("Frequency Band Power Contribution",  color="#3a7ebf", fontsize=10)
         self.f_ax.set_ylim(0, 50)
         self.f_ax.set_xlabel("frequency bands (Hz)", fontsize=8, color="white")
         self.f_ax.set_ylabel("% power [a*2/Hz]", fontsize=8, color="white")
@@ -137,7 +145,7 @@ class AnalyseFrame(CTkFrame):
         self.f_ax.tick_params(axis='y', colors='white')
 
         # Configure second subplot (Spectrogram)
-        self.s_ax.set_title("Spectrogram", color="#3a7ebf")
+        self.s_ax.set_title("Spectrogram", color="#3a7ebf", fontsize=10)
         self.s_ax.set_xlabel("time", fontsize=8, color="white")
         self.s_ax.set_ylabel("frequency", fontsize=8, color="white")
         self.s_ax.xaxis.set_ticks_position('bottom')

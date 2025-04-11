@@ -23,7 +23,7 @@ class LevelMeter(CTkFrame):
         self.current_dot = 0
         self.filling_phase = True  # Flag to track if we're filling or clearing the dots
 
-        self.canvas = CTkCanvas(self, height=150, width=1000, bg="gray16", borderwidth=0, highlightthickness=0) #highlightthickness=0,bg="black")
+        self.canvas = CTkCanvas(self, height=100, width=1000, bg="gray16", borderwidth=0, highlightthickness=0) #highlightthickness=0,bg="black")
         self.canvas.pack()
 
         self.update_flag = False
@@ -93,7 +93,7 @@ class LevelMeter(CTkFrame):
         # Calculate the start position to center the dots
         start_x = (canvas_width - total_width_needed) / 2
 
-        padding_top = 30  # Space above dots for label & arrow
+        padding_top = 10  # Space above dots for label & arrow
         arrow_y = padding_top  # Arrow and label position
 
         # Define shorter arrow start and end positions
@@ -107,7 +107,7 @@ class LevelMeter(CTkFrame):
         else:
             fill_color = "gray90"
 
-        self.canvas.create_text(arrow_start_x - 15, arrow_y, text="Extension", fill=fill_color, font=("Montserrat", 10, "bold"), anchor="e")
+        self.canvas.create_text(arrow_start_x - 15, arrow_y, text="Extension", fill=fill_color, font=("Montserrat", 8, "bold"), anchor="e")
         self.canvas.create_line(arrow_start_x, arrow_y, arrow_end_x, arrow_y, fill=fill_color, width=2, arrow=tk.LAST)
         # Draw the dots
         dot_y = arrow_y + 20  # Move dots slightly lower
@@ -116,7 +116,7 @@ class LevelMeter(CTkFrame):
             x = start_x + i * (dot_diameter * 4)  # Position each dot
             self.canvas.create_oval(x, dot_y, x + dot_diameter, dot_y + dot_diameter, fill=color, outline="")
 
-        arrow_y_below = dot_y + dot_diameter + 30  # Adjusted position below dots
+        arrow_y_below = dot_y + dot_diameter + 20  # Adjusted position below dots
         flexion_start_x = start_x + (self.num_dots - 1) * (dot_diameter * 4) -20 # Start at last dot
         flexion_end_x = flexion_start_x - arrow_length  # Move backward
 
@@ -126,7 +126,7 @@ class LevelMeter(CTkFrame):
         else:
             flex_fill_color = "gray90"
 
-        self.canvas.create_text(flexion_start_x + 15, arrow_y_below, text="Flexion", fill=flex_fill_color, font=("Montserrat", 10, "bold"), anchor="w")
+        self.canvas.create_text(flexion_start_x + 15, arrow_y_below, text="Flexion", fill=flex_fill_color, font=("Montserrat", 8, "bold"), anchor="w")
         self.canvas.create_line(flexion_start_x, arrow_y_below, flexion_end_x, arrow_y_below, fill=flex_fill_color, width=2, arrow=tk.LAST)
             
 

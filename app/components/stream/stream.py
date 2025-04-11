@@ -31,8 +31,8 @@ class StreamFrame(CTkFrame):
         self.configure(fg_color="transparent")
         # Create a frame for operations and controls (buttons)
         #self.operations_frame = Frame(self, bg="black")
-        self.operations_frame = CTkFrame(self, )
-        self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=2)
+        self.operations_frame = CTkFrame(self )
+        self.operations_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
         self.operations_frame.grid_columnconfigure(0, weight=1)
         self.operations_frame.grid_rowconfigure(0, weight=1) # operations frame
         self.operations_frame.grid_rowconfigure(1, weight=1) # output frame
@@ -165,7 +165,7 @@ class StreamFrame(CTkFrame):
         self.im = None  # For storing the image object to update later
 
         self.meter = lm.LevelMeter(self.operations_frame, self.s)
-        self.meter.grid(row=2,column=0, padx=10, columnspan=999, pady=20, sticky="nsew")
+        self.meter.grid(row=2,column=0, padx=10, columnspan=999, pady=10, sticky="nsew")
 
         """
         self.positions_frame = Frame(self.operations_frame, bg="black")
@@ -208,7 +208,7 @@ class StreamFrame(CTkFrame):
 
         self.output_frame = CTkFrame(self)
         self.output_frame.grid(row=3, column=0, columnspan=1, rowspan=2, 
-                               sticky="nsew", padx=5, pady=2)
+                               sticky="nsew", padx=5, pady=0)
         self.output_frame.grid_rowconfigure(0, weight=1)  # Make sure the canvas inside expands
         self.output_frame.grid_columnconfigure(0, weight=1)
         
@@ -216,24 +216,30 @@ class StreamFrame(CTkFrame):
         # figures
         self.fig = Figure(facecolor='#292929') # gray16 like the theme
         
-        
-        #self.ax, self.ax1, self.ax2 = self.fig.subplots(nrows=1, ncols=3)
-        #self.fig.subplots_adjust(wspace=0.5)
         # Use gridspec to control the layout
-        #gs = self.fig.add_gridspec(2, 2)  # 2 rows, 2 columns
-        gs = self.fig.add_gridspec(2, 2, height_ratios=[2, 1])  # First row gets 2x the height of the second row
+        #gs = self.fig.add_gridspec(2, 2, height_ratios=[2, 1])  # First row gets 2x the height of the second row
+        gs = self.fig.add_gridspec(2, 1, height_ratios=[10, 1])  # 
 
 
         # Add subplots: 
         # First row (2 subplots in the first row)
-        self.ax1= self.fig.add_subplot(gs[0, 0])  # First subplot
-        self.ax2 = self.fig.add_subplot(gs[0, 1])  # Second subplot
+        #self.ax1 = self.fig.add_subplot(gs[0,0])
+        self.ax1= self.fig.add_subplot(gs[1])  # First subplot
+        self.ax2 = self.fig.add_subplot(gs[0])  # Second subplot
 
         # Second row (1 subplot that spans the full width of the second row)
-        self.ax = self.fig.add_subplot(gs[1, :])  # Spans all 3 columns
+        #self.ax = self.fig.add_subplot(gs[1, :])  # Spans all 3 columns
 
         # Adjust space between subplots
-        self.fig.subplots_adjust(wspace=0.5, hspace=0.5)  # Increase vertical space with hspace
+        #self.fig.subplots_adjust(wspace=0.01, hspace=0.5)  # Increase vertical space with hspace
+        self.fig.tight_layout(pad=2)  # Adjust the padding as necessary
+
+        # Adjust space between subplots
+        self.fig.subplots_adjust(wspace=0.01, hspace=0.5)  # Adjust vertical space with hspace
+
+        # Ensure no internal padding on figure
+        #self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
 
         """
             code to rearrange the figures 
@@ -249,7 +255,7 @@ class StreamFrame(CTkFrame):
         """
 
         # Acceleration Graph
-        #""""
+        """"
         self.ax.set_title(f"3D Raw Acceleration", color="#3a7ebf")
         self.ax.set_ylim(-6, 6)
         self.ax.set_facecolor("#292929")
@@ -266,22 +272,22 @@ class StreamFrame(CTkFrame):
         self.ax.autoscale(False)
         self.ax.grid(False)
         
-        #"""
+        """
         # Vag signal
-        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz", color="#3a7ebf")
+        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz", color="#3a7ebf", fontsize=8)
         self.ax1.set_ylim(-2, 2)
         self.ax1.autoscale(True)
         self.ax1.set_facecolor("#292929")
         self.ax1.spines['bottom'].set_color('white')
         self.ax1.spines['left'].set_color('white')
-        self.ax1.spines['top'].set_color("none")
-        self.ax1.spines['right'].set_color('none')
-        self.ax1.set_xlabel("time", fontsize=10, color="white")
-        self.ax1.set_ylabel("acceleration (g)", fontsize=10, color="white")
+        self.ax1.spines['top'].set_color("None")
+        self.ax1.spines['right'].set_color('None')
+        #self.ax1.set_xlabel("time", fontsize=8, color="white")
+        self.ax1.set_ylabel("acceleration (g)", fontsize=8, color="white")
         self.ax1.xaxis.set_ticks_position('bottom')
         self.ax1.yaxis.set_ticks_position('left')
-        self.ax1.tick_params(axis='x', colors='white')
-        self.ax1.tick_params(axis='y', colors='white')
+        self.ax1.tick_params(axis='x', colors='white', labelsize=8, bottom=False, labelbottom=False)
+        self.ax1.tick_params(axis='y', colors='white', labelsize=8 )
         self.ax1.grid(False)
 
         # power spectrum
@@ -289,17 +295,18 @@ class StreamFrame(CTkFrame):
         self.ax2.set_facecolor("#292929")
         self.ax2.spines['bottom'].set_color('white')
         self.ax2.spines['left'].set_color('white')
-        self.ax2.spines['top'].set_color("none")
-        self.ax2.spines['right'].set_color('none')
-        self.ax2.set_xlabel("time", fontsize=10, color="white")
-        self.ax2.set_ylabel("PSD", fontsize=10, color="white")
+        self.ax2.spines['top'].set_color("None")
+        self.ax2.spines['right'].set_color('None')
+        self.ax2.set_xlabel("time", fontsize=8, color="white")
+        self.ax2.set_ylabel("PSD", fontsize=8, color="white")
         self.ax2.xaxis.set_ticks_position('bottom')
         self.ax2.yaxis.set_ticks_position('left')
-        self.ax2.tick_params(axis='x', colors='white')
-        self.ax2.tick_params(axis='y', colors='white')
+        self.ax2.tick_params(axis='x', colors='white', labelsize=8)
+        self.ax2.tick_params(axis='y', colors='white', labelsize=8)
 
         self.fig_canvas = FigureCanvasTkAgg(self.fig, master=self.output_frame)
-        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='news', padx=5, pady=2)
+        self.fig_canvas.get_tk_widget().grid(row=0, column=0, sticky='news', padx=0, pady=0)
+        
 
         """
         self.vag_stream_canvas = FigureCanvasTkAgg(self.vag_stream, master=self.output_frame)
@@ -366,10 +373,10 @@ class StreamFrame(CTkFrame):
         
         self.serial_port_status = status  
         if(self.serial_port_status == True):
-            print("should update label")
             self.master.sensor_status_label.configure(text="connected", text_color="green", font=("Montserrat", 10, "bold"))
         else:
             self.master.sensor_status_label.configure(text="disconnected", font=("Montserrat", 10, "bold"))
+            
     def on_usb_port_combo_select(self, event):
         print("combo selected")
         selected_usb_port = self.usb_port_combo.get()
@@ -400,6 +407,7 @@ class StreamFrame(CTkFrame):
             if self.ani:
                 self.stop_animation()
             
+            '''
             self.ani = animation.FuncAnimation(
                 self.fig,
                 self.animate,
@@ -409,6 +417,7 @@ class StreamFrame(CTkFrame):
                 interval=10,
                 blit=False, # Turning on Blit
             )
+            '''
             
             self.ani1 = animation.FuncAnimation(
                 self.fig,
@@ -543,6 +552,7 @@ class StreamFrame(CTkFrame):
         self.time_index.append(t_index)
 
     # animate functions that may be blocking.
+    '''
     def animate(self, i, tx, accel_x, accel_y, accel_z, mag):
         self.ax.clear()
         self.ax.set_title(f"3D Raw Acceleration", color="#3a7ebf")
@@ -552,12 +562,12 @@ class StreamFrame(CTkFrame):
         self.ax.plot(tx, mag, label="mag", linewidth=1, color="red")
         self.ax.legend()
         self.ax.set_ylim(-10, 10)
-
+    '''
     def animate1(self, i,  vag):
         self.ax1.clear()
-        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz", color="#3a7ebf")
+        self.ax1.set_title(f"VAG Signal 100Hz - 1000Hz", color="#3a7ebf", fontsize=8)
         self.ax1.plot(vag, label="vag signal", linewidth=1, color="#1BD3EA")
-        self.ax1.legend()
+        #self.ax1.legend()
         self.ax1.set_ylim(-4, 4)
     
     def animate2(self, i,  spectrograms):

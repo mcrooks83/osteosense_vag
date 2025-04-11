@@ -8,6 +8,8 @@ from math import sqrt
 #   b'\x00\x01\xc4\xb9\xff\xcb\xfb\xe4\x00\x83\x0b'
 #   divide by 1024 
 
+
+##0.000122
 def simple_convert(row, conversion, gyr=0, ):
     acc_x = (unpack('<h', bytes(row[2:4]))[0]) * conversion 
     acc_y = (unpack('<h', bytes(row[4:6]))[0]) * conversion 

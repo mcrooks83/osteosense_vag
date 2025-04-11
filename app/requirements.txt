@@ -1,6 +1,7 @@
 # update this with latest packages used
 tk
 customtkinter
+pyserial
 numpy
 matplotlib
 pandas

@@ -36,6 +36,31 @@ The inital software is a python tkinter desktop application (not customertkinter
 It allows two core views - stream and analyse. 
 It is curently developed and tested on Ubuntu / Windows and other platforms will be tested at a later date
 
+## install code base on mini pc via ssh
+
+ssh to pc - ssh rightstep@192.168.1.131
+zip:  zip -r vag.zip app
+scp:  scp "vag.zip" rightstep@192.168.1.131:~/Desktop/apps
+
+isntall pip if it is not there
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+unzip vag.zip
+
+create a virtual environment (now a must in ubuntu)
+sudo apt install python3.12-venv
+sudo apt-get install python3-tk
+sudo apt-get install portaudio19-dev
+
+python -m venv vag_venv
+source vag_venv/bin/activate
+pip install -r requirements.txt
+
+export DISPLAY=:0
+
+xhost +SI:localuser:$(whoami)
+
+
+
 ### Stream
 The stream view allows data to be streamed from the sensor over USB and is used to test functionality of the sensor and also to provide the ability to observe motion in real time.  
 

@@ -53,7 +53,7 @@ class Settings:
         self.audio_mode = 1 # 1 is sonify and 0 is audify
 
         # filter settings 
-        self.sampling_rate = 3000 # 3Khz
+        self.sampling_rate = 2048 # 2Khz
         self.filter_type = "bandpass" # high
         self.low_cut_off = 100 # removes muscle artifacts and baseline wander
         self.high_cut_off = 1000  # 

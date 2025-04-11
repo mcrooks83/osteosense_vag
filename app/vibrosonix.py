@@ -23,18 +23,12 @@ class MainApplication(ctk.CTk):
         self.width = Tk.winfo_screenwidth(self)
         self.height = Tk.winfo_screenheight(self)
         self.geometry(f"{self.width}x{self.height}")
-        #self.state("normal")
-        '''
-        if(sys.platform == "linux"):
-            self.state("normal")
-        else:
-            self.state("zoomed")
-        '''
-        #self.title("A Right Step Health & TalTech Collaboration")
+        #self.geometry(f"{1280}x{800}")
+        self.overrideredirect(True)
+        self.title("Osteosense: Vibrosonx")
         
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
-        #self.configure(bg="black")
         ctk.set_default_color_theme("dark-blue")
         ctk.set_appearance_mode("dark")
 
